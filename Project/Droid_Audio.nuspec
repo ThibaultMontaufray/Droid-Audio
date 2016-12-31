@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Droid_Audio</id>
+    <version>1.0.0</version>
+    <title>Servodroid.audio</title>
+    <authors>Thibault MONTAUFRAY</authors>
+    <owners>Servodroid</owners>
+    <licenseUrl>https://raw.githubusercontent.com/ThibaultMontaufray/Tools4Libraries/master/License</licenseUrl>
+    <projectUrl>https://github.com/ThibaultMontaufray/Droid-audio</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/ThibaultMontaufray/Tools4Libraries/master/ManagersDevComponents/servodroidIconColor.png</iconUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>Audio manager music player. In next version music file manipulation</description>
+    <copyright>Copyright 2016</copyright>
+    <tags>Servodroid audio</tags>
+  	<dependencies>
+		<group targetFramework="net40">
+			<dependency id="NAudio" version="1.7.3" />
+			<dependency id="officeribbon" version="3.5.8.4" />
+			<dependency id="Tools4Libraries" version="1.0.10" />
+		</group>
+	</dependencies>
+</metadata>
+  <files>
+    <file src="lib\**\*.dll" target="lib" />
+    <file src="lib\**\*.xml" target="lib" />
+    <file src="lib\**\*.config" target="lib" />
+  </files>
+</package>
