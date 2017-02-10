@@ -122,7 +122,6 @@ namespace Droid_Audio
 			button_pp.FlatAppearance.BorderSize = 0;
 			button_pp.Click += new EventHandler(button_pp_Click);
 			button_pp.MouseHover += new EventHandler(EventMouseHover);
-			//gb.Controls.Add(button_pp);
 			
 			pictureBox = new PictureBox();
 			pictureBox.Width = 74;
@@ -164,16 +163,16 @@ namespace Droid_Audio
 		
 		private void InitializeData()
 		{
-			if (!string.IsNullOrEmpty(trackLinked.Title))
+			if (!string.IsNullOrEmpty(trackLinked.Title) && trackLinked.AlbumName != null)
 			{
-				if (trackLinked.Album != null && trackLinked.Album.Path_cover_smart != null) pictureBox.BackgroundImage = new Bitmap(trackLinked.Album.Path_cover_smart);
+				if (trackLinked.Albums != null && trackLinked.Path_cover_smart != null) pictureBox.BackgroundImage = new Bitmap(trackLinked.Path_cover_smart);
 				else pictureBox.BackgroundImage = tsm.Gui.imageListFicheAudio.Images[tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
 				
 				if(trackLinked.Title.Length<10) labelTitle.Text = trackLinked.Title;
 				else labelTitle.Text = trackLinked.Title.Substring(0, 10) + "...";
 				
-				if(trackLinked.Album.Name.Length<10) labelAlbum.Text = trackLinked.Album.Name;
-				else labelAlbum.Text = trackLinked.Album.Name.Substring(0, 10) + "...";
+				if(trackLinked.AlbumName.Length<10) labelAlbum.Text = trackLinked.AlbumName;
+				else labelAlbum.Text = trackLinked.AlbumName.Substring(0, 10) + "...";
 			}
 		}
 		#endregion

@@ -13,89 +13,22 @@ namespace Droid_Audio
     /// </summary>
     public class CustomWaveViewer : System.Windows.Forms.UserControl
     {
-        public Color PenColor { get; set; }
-        public float PenWidth { get; set; }
-
-        public void FitToScreen()
-        {
-            if (waveStream == null) return;
-
-            int samples = (int)(waveStream.Length / bytesPerSample);
-            startPosition = 0;
-            SamplesPerPixel = samples / this.Width;
-        }
-
-        public void Zoom(int leftSample, int rightSample)
-        {
-            startPosition = leftSample * bytesPerSample;
-            SamplesPerPixel = (rightSample - leftSample) / this.Width;
-        }
-
-        private Point mousePos, startPos;
-        private bool mouseDrag = false;
-
-        protected override void OnMouseDown(MouseEventArgs e)
-        {
-            if (e.Button == System.Windows.Forms.MouseButtons.Left)
-            {
-                startPos = e.Location;
-                mousePos = new Point(-1, -1);
-                mouseDrag = true;
-                DrawVerticalLine(e.X);
-            }
-
-            base.OnMouseDown(e);
-        }
-
-        protected override void OnMouseMove(MouseEventArgs e)
-        {
-            if (mouseDrag)
-            {
-                DrawVerticalLine(e.X);
-                if (mousePos.X != -1) DrawVerticalLine(mousePos.X);
-                mousePos = e.Location;
-            }
-            base.OnMouseMove(e);
-        }
-
-        protected override void OnMouseUp(MouseEventArgs e)
-        {
-            if (mouseDrag && e.Button == System.Windows.Forms.MouseButtons.Left)
-            {
-                mouseDrag = false;
-                DrawVerticalLine(startPos.X);
-
-                if (mousePos.X == -1) return;
-                DrawVerticalLine(mousePos.X);
-
-                int leftSample = (int)(StartPosition / bytesPerSample + samplesPerPixel * Math.Min(startPos.X, mousePos.X));
-                int rightSample = (int)(StartPosition / bytesPerSample + samplesPerPixel * Math.Max(startPos.X, mousePos.X));
-                Zoom(leftSample, rightSample);
-            }
-            else if (e.Button == System.Windows.Forms.MouseButtons.Middle) FitToScreen();
-
-            base.OnMouseUp(e);
-        }
-
-        private void DrawVerticalLine(int x)
-        {
-            ControlPaint.DrawReversibleLine(PointToScreen(new Point(x, 0)), PointToScreen(new Point(x, Height)), Color.Black);
-        }
-
-        protected override void OnResize(EventArgs e)
-        {
-            base.OnResize(e);
-            FitToScreen();
-        }
-
-        /// <summary> 
-        /// Required designer variable.
-        /// </summary>
+        #region Attributes
         private System.ComponentModel.Container components = null;
         private WaveStream waveStream;
         private int samplesPerPixel = 128;
         private long startPosition;
         private int bytesPerSample;
+        private Point mousePos, startPos;
+        private bool mouseDrag = false;
+        #endregion
+
+        #region Properties
+        public Color PenColor { get; set; }
+        public float PenWidth { get; set; }
+        #endregion  
+
+        #region Constructor
         /// <summary>
         /// Creates a new WaveViewer control
         /// </summary>
@@ -108,7 +41,22 @@ namespace Droid_Audio
             this.PenColor = Color.DodgerBlue;
             this.PenWidth = 1;
         }
+        #endregion
 
+        #region Methods public
+        public void FitToScreen()
+        {
+            if (waveStream == null) return;
+
+            int samples = (int)(waveStream.Length / bytesPerSample);
+            startPosition = 0;
+            SamplesPerPixel = samples / this.Width;
+        }
+        public void Zoom(int leftSample, int rightSample)
+        {
+            startPosition = leftSample * bytesPerSample;
+            SamplesPerPixel = (rightSample - leftSample) / this.Width;
+        }
         /// <summary>
         /// sets the associated wavestream
         /// </summary>
@@ -128,7 +76,6 @@ namespace Droid_Audio
                 this.Invalidate();
             }
         }
-
         /// <summary>
         /// The zoom level, in samples per pixel
         /// </summary>
@@ -144,7 +91,6 @@ namespace Droid_Audio
                 this.Invalidate();
             }
         }
-
         /// <summary>
         /// Start position (currently in bytes)
         /// </summary>
@@ -159,7 +105,54 @@ namespace Droid_Audio
                 startPosition = value;
             }
         }
+        #endregion
 
+        #region Methods protected
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            if (e.Button == System.Windows.Forms.MouseButtons.Left)
+            {
+                startPos = e.Location;
+                mousePos = new Point(-1, -1);
+                mouseDrag = true;
+                DrawVerticalLine(e.X);
+            }
+
+            base.OnMouseDown(e);
+        }
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            if (mouseDrag)
+            {
+                DrawVerticalLine(e.X);
+                if (mousePos.X != -1) DrawVerticalLine(mousePos.X);
+                mousePos = e.Location;
+            }
+            base.OnMouseMove(e);
+        }
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            if (mouseDrag && e.Button == System.Windows.Forms.MouseButtons.Left)
+            {
+                mouseDrag = false;
+                DrawVerticalLine(startPos.X);
+
+                if (mousePos.X == -1) return;
+                DrawVerticalLine(mousePos.X);
+
+                int leftSample = (int)(StartPosition / bytesPerSample + samplesPerPixel * Math.Min(startPos.X, mousePos.X));
+                int rightSample = (int)(StartPosition / bytesPerSample + samplesPerPixel * Math.Max(startPos.X, mousePos.X));
+                Zoom(leftSample, rightSample);
+            }
+            else if (e.Button == System.Windows.Forms.MouseButtons.Middle) FitToScreen();
+
+            base.OnMouseUp(e);
+        }
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            FitToScreen();
+        }
         /// <summary> 
         /// Clean up any resources being used.
         /// </summary>
@@ -174,7 +167,6 @@ namespace Droid_Audio
             }
             base.Dispose(disposing);
         }
-
         /// <summary>
         /// <see cref="Control.OnPaint"/>
         /// </summary>
@@ -211,9 +203,9 @@ namespace Droid_Audio
 
             base.OnPaint(e);
         }
+        #endregion
 
-
-        #region Component Designer generated code
+        #region Methods private
         /// <summary> 
         /// Required method for Designer support - do not modify 
         /// the contents of this method with the code editor.
@@ -221,6 +213,10 @@ namespace Droid_Audio
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+        }
+        private void DrawVerticalLine(int x)
+        {
+            ControlPaint.DrawReversibleLine(PointToScreen(new Point(x, 0)), PointToScreen(new Point(x, Height)), Color.Black);
         }
         #endregion
     }

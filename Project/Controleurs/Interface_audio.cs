@@ -1,4 +1,4 @@
-// Log code 19
+// Log code 19 - 07
 
 // http://www.developpez.net/forums/d521994/dotnet/langages/csharp/lire-wav-mp3-plus-simplement-possible/
 // http://www.codeproject.com/Articles/14709/Playing-MP3s-using-MCI
@@ -11,6 +11,10 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms.VisualStyles;
 using Tools4Libraries;
+using System.Threading.Tasks;
+using NAudio.Wave;
+using System.Xml.Serialization;
+using System.Linq;
 
 /// <summary>
 /// Interface for Tobi Assistant application : take care, some french word here to allow Tobi to speak with natural langage.
@@ -31,71 +35,118 @@ namespace Droid_Audio
 	{
 		#region Attributes
         private static Interface_audio _this;
-		private Panel sheet;
-		private ToolStripMenuAudio tsm;
+		private Panel _sheet;
+		private ToolStripMenuAudio _tsm;
 		private List<String> listToolStrip;
 		private bool panelAudioBuilt;
-		private PanelAudio panau;
-		private List<Artist> listArtist;
-		private Artist current_artist;
-		private string path;
-		
-		public event delegateInterfaceMusic TicketClose;
+		private PanelAudio _panau;
+		private List<Track> _listTrack;
+        private List<string> _recentAudio;
+        private List<string> _musicFolders;
+        private string _convertSrcFile;
+        private string _convertTrgFile;
+        
+        public event delegateInterfaceMusic TicketClose;
 		public event delegateInterfaceMusic Disposed;
-		#endregion
-		
-		#region Properties
-		public PanelAudio Panau
+        #endregion
+
+        #region Properties
+        public string ConvertTargetFile
+        {
+            get { return _convertTrgFile; }
+            set { _convertTrgFile = value; }
+        }
+        public string ConvertSourceFile
+        {
+            get { return _convertSrcFile; }
+            set { _convertSrcFile = value; }
+        }
+        public List<string> MusicFolders
+        {
+            get { return _musicFolders; }
+            set
+            {
+                _musicFolders = value;
+                SaveMusicFolders();
+            }
+        }
+        public List<string> RecentAudio
+        {
+            get { return _recentAudio; }
+            set { _recentAudio = value; }
+        }
+        public PanelAudio Panau
 		{
-			get { return panau; }
+			get { return _panau; }
 		}
-		
-		public List<Artist> ListArtist
+		public List<Track> ListTrack
 		{
-			get { return listArtist; }
-			set { listArtist = value; }
+			get { return _listTrack; }
+			set { _listTrack = value; }
 		}
-		
 		public override bool Openned
 		{
-			get { return panau.OpenedCurrentFile; }
+			get { return _panau.OpenedCurrentFile; }
 			set {  }
 		}
-		
 		public Panel SheetMusic
 		{
-			get { return sheet; }
-			set { sheet = value; }
+			get { return _sheet; }
+			set { _sheet = value; }
 		}
-		
-		public new ToolStripMenuAudio Tsm
+		public ToolStripMenuAudio Tsm
 		{
-			get { return tsm; }
-			set { tsm = value as ToolStripMenuAudio; }
+			get { return _tsm; }
+			set { _tsm = value as ToolStripMenuAudio; }
 		}
 		#endregion
 		
 		#region Constructor / Destructor
         public Interface_audio()
         {
-            BuildToolBar();
-            _this = this;
+            Init();
         }
         public Interface_audio(List<String> lts, string pathmusic)
 		{
-			path = pathmusic;
+            if (!_musicFolders.Contains(pathmusic))
+            {
+                _musicFolders.Add(pathmusic);
+                SaveMusicFolders();
+            }
 			listToolStrip = lts;
-            BuildToolBar();
-            _this = this;
-		}
-		#endregion
-		
-		#region Methods Public
-		#region Methods Public override
-		public override bool Open(object o)
+            Init();
+        }
+        #endregion
+
+        #region Methods Public
+        #region Methods Public override
+        public override bool Open(object o)
 		{
-			if(panau == null) BuildPanel();
-			return AddTitle();
+            string filePath = string.Empty;
+            if (o == null && !(o is string))
+            {
+                OpenFileDialog ofd = new OpenFileDialog();
+                ofd.Filter = "Audio files (.mp3 .wma)|*.mp3;*.wma|All Files (*.*)|*.*";
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    filePath = ofd.FileName;
+                }
+            }
+            else
+            {
+                filePath = o as string;
+            }
+
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                SaveAudioRecurrent(filePath);
+                if (_panau == null) BuildPanel();
+                return AddTitle(filePath);
+            }
+            else
+            {
+                return false;
+            }
 		}
 		public override void Print()
 		{
@@ -131,13 +182,13 @@ namespace Droid_Audio
 		}
 		public override void Resize()
 		{
-			panau.Resize();
+			_panau.Resize();
 		}
 		public override void Refresh()
 		{
 			if (panelAudioBuilt)
 			{
-				panau.Refresh();
+				_panau.Refresh();
 			}
 		}
 		public override void GlobalAction(object sender, EventArgs e)
@@ -148,11 +199,12 @@ namespace Droid_Audio
 		}
 		public System.Windows.Forms.RibbonTab BuildToolBar()
 		{
-			tsm = new Assistant.ToolStripMenuAudio(listToolStrip);
-			return tsm;
+			_tsm = new ToolStripMenuAudio(listToolStrip);
+            _tsm.ActionAppened += GlobalAction;
+			return _tsm;
 		}
-		#endregion
-		public void GoAction(string act)
+        #endregion
+        public void GoAction(string act)
 		{
 			switch (act.ToLower())
 			{
@@ -186,52 +238,45 @@ namespace Droid_Audio
 				case "loop":
 					LaunchLoop();
 					break;
-				case "eject":
-					LaunchEject();
-					break;
-			}
+                case "eject":
+                    LaunchEject();
+                    break;
+                case "mp3towav":
+                    LaunchConvertMp3ToWav();
+                    break;
+                case "wavtomp3":
+                    LaunchConvertWavToMp3();
+                    break;
+                case "getartistpicture":
+                    LaunchGetArtistPicture();
+                    break;
+            }
 		}
-		public bool AddTitle()
+		public bool AddTitle(string filePath)
 		{
-			return panau.AddTicket(this);
+			return _panau.AddTicket(this, filePath);
 		}
-		public Track GetTrack(string artist, string album, string path)
+		public Track GetTrack(string path)
 		{
-			if (!string.IsNullOrEmpty(artist) && !string.IsNullOrEmpty(album)) 
-			{
-				foreach (Artist art in listArtist) 
-				{
-					foreach (Album alb in art.ListAlbum) 
-					{
-						foreach (Track t in alb.ListTrack) 
-						{
-							if (t.Path_track.Equals(path)) 
-								return t;
-						}
-					}
-				}
-				//return new Track(sheet.Text, new Album(new Artist("Unknow")));
-				return new Track(path, new Album(new Artist("Unknow")), this);
-			}
-			else
-			{
-				return new Track(path, new Album(new Artist("Unknow")), this);
-			}
+            return _listTrack.Where(t => t.Path_track.Equals(path)).ToList()[0];
 		}
 		public void BuildPanel()
 		{
-			panau = new PanelAudio(this);
-			panau.BackgroundImage = tsm.Gui.BackgroundImage;
-			panau.BackgroundImageLayout = ImageLayout.Stretch;
-			panau.TicketSelectedChange += new delegateMusic(panau_TicketSelectedChange);
-			panau.TicketClose += new delegateMusic(panau_TicketClose);
-			panau.TicketPP += new delegateMusic(panau_TicketPP);
-            SheetMusic.Controls.Add(panau);
+			_panau = new PanelAudio(this);
+			_panau.TicketSelectedChange += new delegateMusic(panau_TicketSelectedChange);
+			_panau.TicketClose += new delegateMusic(panau_TicketClose);
+			_panau.TicketPP += new delegateMusic(panau_TicketPP);
+            SheetMusic.Controls.Add(_panau);
 			
-			BuildLibrary();
-			panau.RefreshPanelLibrary();
+			_panau.RefreshPanelLibrary();
 			panelAudioBuilt = true;
 		}
+        public void SaveUserParams(string currentAudioPath)
+        {
+            SaveMusicFolders();
+            SaveAudioRecurrent(currentAudioPath);
+            SaveAudioLib();
+        }
 
         #region ACTION
         public static void ACTION_130_augmenter_volume()
@@ -284,25 +329,27 @@ namespace Droid_Audio
             DialogResult dr = fbd.ShowDialog();
             if ( dr.Equals(DialogResult.OK))
             {
-                path = fbd.SelectedPath;
+                if (!_musicFolders.Contains(fbd.SelectedPath))
+                {
+                    _musicFolders.Add(fbd.SelectedPath);
+                    SaveMusicFolders();
+                }
             }
 			BuildLibrary();			
-		 	panau.RefreshPanelLibrary();
+		 	_panau.RefreshPanelLibrary();
         }
         private void LaunchRefreshLib()
 		{
 			BuildLibrary();			
-		 	panau.RefreshPanelLibrary();
+		 	_panau.RefreshPanelLibrary();
 		}
 		private void LaunchStop()
 		{
-			//panau.CurrentPFA.Stop();
-			panau.CurrentPFA.TrackLinked.Stop();
+			(_panau.CurrentPlayedTrack.AssociatedObject as Track).Stop();
 		}
 		private void LaunchPP()
 		{
-			//panau.CurrentPFA.Play();
-			panau.CurrentPFA.TrackLinked.PlayPause();
+            (_panau.CurrentPlayedTrack.AssociatedObject as Track).PlayPause();
 		}
 		private void LaunchBack()
 		{
@@ -332,112 +379,203 @@ namespace Droid_Audio
 		{
 			
 		}
-		#endregion
-		
-		private void BuildLibrary()
-		{
-			LoadLibrary();
-			
-			try
-			{
-                if (Directory.Exists(path))
-                {
-                    List<string> dirs = new List<string>(Directory.GetDirectories(path));
-                    //List<string> dirs = new List<string>(Directory.GetFiles(path));
+        private void LaunchConvertWavToMp3()
+        { 
+            using (var reader = new NAudio.Wave.AudioFileReader(_convertSrcFile))
+            using (var writer = new NAudio.Lame.LameMP3FileWriter(_convertTrgFile, reader.WaveFormat, NAudio.Lame.LAMEPreset.STANDARD))
+            {
+                reader.CopyTo(writer);
+            }
+        }
+        private void LaunchConvertMp3ToWav()
+        {
+            using (var reader = new Mp3FileReader(_convertSrcFile))
+            using (var writer = new WaveFileWriter(_convertTrgFile, reader.WaveFormat))
+            { 
+                reader.CopyTo(writer);
+            }
+        }
+        private void LaunchGetArtistPicture()
+        {
+        }
+        #endregion
 
-                    ScanFolder(path);
-                    foreach (string dir in dirs)
+        private void Init()
+        {
+            XmlSerializer serializer = new XmlSerializer(typeof(Track));
+            List<string> lstFolder = new List<string>();
+
+            _this = this;
+            _sheet = new Panel();
+            _recentAudio = new List<string>();
+            _musicFolders = new List<string>();
+            _listTrack = new List<Track>();
+
+            if (Properties.Settings.Default.Artists == null) { Properties.Settings.Default.Artists = new System.Collections.Specialized.ListDictionary(); }
+            if (Properties.Settings.Default.RecentTitles != null)
+            { 
+                foreach (var item in Properties.Settings.Default.RecentTitles)
+                {
+                    _recentAudio.Add(item);
+                }
+            }
+            if (Properties.Settings.Default.Folders != null)
+            {
+                foreach (var item in Properties.Settings.Default.Folders)
+                {
+                    lstFolder.Add(item);
+                }
+            }
+            if (Properties.Settings.Default.AudioLib != null)
+            {
+                foreach (var item in Properties.Settings.Default.AudioLib)
+                {
+                    using (StringReader textReader = new StringReader(item))
                     {
-                        ScanFolder(dir);
+                        object o = serializer.Deserialize(textReader) as Track;
+                        if (o is Track) { _listTrack.Add(o as Track); }
                     }
                 }
-			}
-			catch (Exception exp1905)
-			{
-				Log.write("[ ERR : 1905 ] The music path doesn't exist.\nPlease set it in the preference menu.\n\n" + exp1905.Message);
-				return;
-			}
-		}
-        private void ScanFolder(string dir)
+            }
+            else { lstFolder.Add(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic)); }
+            _musicFolders = lstFolder;
+
+            BuildToolBar();
+            BuildPanel();
+        }
+        private void SaveAudioRecurrent(string filePath)
         {
-            string album_tamp = "";
-            string author_tamp = "";
-            bool flagVoidAlbum = false;
+            string thisAudio = string.Format("{0}#{1}", filePath, DateTime.Now);
+            string instAudio;
+            int countAudioFiles = 0;
+            DateTime date;
+            List<string> finalList = new List<string>();
+            finalList.Add(thisAudio);
 
-            string[] audio_ext = { "mp3", "wav", "wma", "flv" };
-            List<string> list_ext = new List<string>(audio_ext);
-			
-            current_artist = new Artist("");
-            listArtist.Add(current_artist);
-
-            album_tamp = dir;
-            author_tamp = dir;
-            // here we have list of tracks or album lists
-            //List<string> dir_artist_list = new List<string>(Directory.EnumerateDirectories(dir));
-            List<string> dir_artist_list = new List<string>(Directory.GetDirectories(dir));
-            foreach (string dir_album in dir_artist_list)
+            foreach (var movie in _recentAudio)
             {
-                // list of tracks
-                current_artist.Name = dir.Split('\\')[dir.Split('\\').Length - 1];
-                album_tamp = dir_album;
-                AddTrack(album_tamp);
-            }
-            //List<string> list_track = new List<string>(Directory.EnumerateFiles(dir));
-            List<string> list_track = new List<string>(Directory.GetFiles(dir));
-
-            if (string.IsNullOrEmpty(current_artist.Name))
-            {
-                current_artist.Name = "Unknow";
-            }
-
-            foreach (string trackTitle in list_track)
-            {
-                if (list_ext.Contains(trackTitle.Split('.')[trackTitle.Split('.').Length - 1].ToLower()))
+                instAudio = movie.Split('#')[0];
+                if (File.Exists(instAudio))
                 {
-                    if (!flagVoidAlbum && dir_artist_list.Count > 0)
+                    if (!instAudio.Equals(filePath))
                     {
-                        current_artist.GetLastAlbum().Name = "No album";
-                        flagVoidAlbum = true;
+                        if (DateTime.TryParse(movie.Split('#')[1], out date))
+                        {
+                            if (date >= DateTime.Now.AddMonths(-2))
+                            {
+                                finalList.Add(movie);
+                            }
+                        }
                     }
-                    if (dir_artist_list.Count == 0) current_artist.GetLastAlbum().Name = author_tamp.Split('\\')[author_tamp.Split('\\').Length - 1];
+                    countAudioFiles++;
+                }
+                if (countAudioFiles > 16) break;
+            }
+            _recentAudio = finalList;
 
-                    Track t = new Track(trackTitle, current_artist.GetLastAlbum(), this);
+            Properties.Settings.Default.RecentTitles = new System.Collections.Specialized.StringCollection();
+            foreach (var audio in _recentAudio)
+            {
+                Properties.Settings.Default.RecentTitles.Add(audio);
+            }
+            Properties.Settings.Default.Save();
+        }
+        private void SaveMusicFolders()
+        {
+            Properties.Settings.Default.Folders = new System.Collections.Specialized.StringCollection();
+            foreach (var folder in _musicFolders)
+            {
+                Properties.Settings.Default.Folders.Add(folder);
+            }
+            Properties.Settings.Default.Save();
+        }
+        private void SaveAudioLib()
+        {
+            XmlSerializer serializer = new XmlSerializer(typeof(Track));
+            Properties.Settings.Default.AudioLib = new System.Collections.Specialized.StringCollection();
+            foreach (var artist in _listTrack)
+            {
+                try
+                {
+                    using (StringWriter textWriter = new StringWriter())
+                    {
+                        serializer.Serialize(textWriter, artist);
+                        Properties.Settings.Default.AudioLib.Add(textWriter.ToString());
+                    }
+                }
+                catch (Exception exp)
+                {
+                    Log.Write("[ ERR : 1907 ] Error while saving artist profile.\n\n" + exp.Message);
+                }
+            }
+            Properties.Settings.Default.Save();
+        }
+        private void BuildLibrary()
+		{
+            //bool result;
+			LoadLibrary();
+
+            foreach (string folder in _musicFolders)
+            {
+                try
+			    {
+                    if (Directory.Exists(folder))
+                    {
+                        List<string> dirs = new List<string>(Directory.GetDirectories(folder));
+                        //List<string> dirs = new List<string>(Directory.GetFiles(path));
+
+                        //ScanFolder(folder);
+                        foreach (string dir in dirs)
+                        {
+                            try
+                            {
+                                ScanFolder(dir);
+
+                                //Task<bool> task = new Task<bool>(() => ScanFolder(dir));
+                                //task.Start();
+                                //result = await task;
+                            }
+                            catch (Exception exp)
+                            {
+                                Log.Write("[ ERR : 1906 ] Cannot create this track.\n\n" + exp.Message);
+                            }
+                        }
+                        SaveAudioLib();
+                    }
+                }
+			    catch (Exception exp1905)
+			    {
+				    Log.Write("[ ERR : 1905 ] The music path doesn't exist.\nPlease set it in the preference menu.\n\n" + exp1905.Message);
                 }
             }
         }
+        private bool ScanFolder(string dir)
+        {
+            Track track;
+            string[] audio_ext = { ".mp3", ".wav", ".wma", ".flv", ".cue", ".aiff" };
+            
+            foreach (var subdir in Directory.GetDirectories(dir))
+            {
+                ScanFolder(subdir);
+            }
+            foreach (string filePath in Directory.GetFiles(dir).Where(f => audio_ext.Contains(Path.GetExtension(f))))
+            {
+                track = new Track(filePath);
+                if (!_listTrack.Contains(track))
+                {
+                    if (!Properties.Settings.Default.Artists.Contains(track.ArtistName))
+                    {
+                        string artist = string.IsNullOrEmpty(track.ArtistName) ? "Unknow" : track.ArtistName;
+                        Properties.Settings.Default.Artists[artist] = Droid_web.Web; ;
+                    }
+                    _listTrack.Add(track);
+                }
+            }
+            return true;
+        }
         private void LoadLibrary()
 		{
-			listArtist = new List<Artist>();
-			// TODO : add the save and import library.
-		}
-		private void AddTrack(string album)
-		{
-			string[] audio_ext = {"mp3", "wav", "wma", "flv"};
-			List<string> list_ext = new List<string>(audio_ext);
-			
-			string[] audio_cover = {"jpg", "png"};
-			List<string> list_cover = new List<string>(audio_cover);
-			
-			current_artist.AddAlbum(album);
-			
-			//List<string> list_title = new List<string>(Directory.EnumerateFiles(album));
-			List<string> list_title = new List<string>(Directory.GetFiles(album));
-			foreach (string s in list_title)
-			{
-				if(list_ext.Contains(s.Split('.')[s.Split('.').Length-1].ToLower()))
-				{
-					Track track = new Track(s, current_artist.GetLastAlbum(), this);
-				}
-				else if(list_cover.Contains(s.Split('.')[s.Split('.').Length-1].ToLower()))
-				{
-					if (s.ToLower().Contains("large")) current_artist.GetLastAlbum().Path_cover_large = s;
-					else current_artist.GetLastAlbum().Path_cover_smart = s;
-				}
-				else
-				{
-					
-				}
-			}
+			_listTrack = new List<Track>();
 		}
 		#endregion
 		

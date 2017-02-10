@@ -44,7 +44,7 @@ namespace Droid_Audio
 				this.Close();
 			} catch (Exception exp2100) 
 			{
-				Log.write("[ INF : 2100 ] Error on the peripheric path.\n" + exp2100.Message);
+				Log.Write("[ INF : 2100 ] Error on the peripheric path.\n" + exp2100.Message);
 			}
 			
 		}

@@ -1,7 +1,5 @@
+using Droid_Audio.Vues;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Droid_Audio
@@ -16,7 +14,7 @@ namespace Droid_Audio
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new GUI());
+            Application.Run(new Demo());
         }
     }
 }

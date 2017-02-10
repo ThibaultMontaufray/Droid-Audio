@@ -11,199 +11,259 @@ using Tools4Libraries;
 
 namespace Droid_Audio
 {
-	public delegate void delegatePanelAlbum(object sender, EventArgs e);
+	public delegate void delegatePanelMusicTile(object sender, EventArgs e);
 	
 	/// <summary>
 	/// Description of PanelAlbum.
 	/// </summary>
-	public class PanelAlbum : Panel
+	public class PanelMusicTile : Panel
 	{
-		#region Attribute
-		private Interface_audio int_aud;
-		private List<Album> listAlbum;
-		private Album album;
-		private string kindOfTicket;
-		private Artist artist;
+        #region Enum
+        public enum Ticket
+        {
+            ALBUM,
+            ARTIST,
+            FOLDER,
+            TYPE
+        }
+        #endregion
+
+        #region Attribute
+        private Interface_audio _intAud;
+		private List<string> _albums;
+		private List<string> _artists;
+        private List<Track> _tracks;
+        private Ticket _kindOfTicket;
+
+        private Label _labelSecond;
+		private Label _labelMain;
+		private PictureBox _pictureMain;
+		private PictureBox _picture1;
+		private PictureBox _picture2;
+		private PictureBox _picture3;
 		
-		private Label labelAlbum;
-		private Label labelArtist;
-		private PictureBox picture0;
-		private PictureBox picture1;
-		private PictureBox picture2;
-		private PictureBox picture3;
-		
-		public event delegatePanelAlbum TicketClick;
+		public event delegatePanelMusicTile TicketClick;
 		#endregion
 		
 		#region Properties
-		public Artist TicketArtist
+		public List<string> TicketArtist
 		{
-			get { return artist; }
+			get { return _artists; }
 		}
-		
-		public Album TicketAlbum
+		public List<string> TicketAlbums
 		{
-			get { return album; }
+			get { return _albums; }
 		}
-		
-		public string KindOfTicket
+		public Ticket KindOfTicket
 		{
-			get { return kindOfTicket; }
+			get { return _kindOfTicket; }
 		}
 		#endregion
 		
 		#region Constructor
-		public PanelAlbum(Interface_audio inter_aud, Album alb, string kind_of_ticket)
-		{
-			kindOfTicket = kind_of_ticket;
-			album = alb;
-			artist = album.My_Artist;
-			int_aud = inter_aud;
-			InitializeComponent();
+		public PanelMusicTile(Interface_audio inter_aud, List<Track> trackLst, Ticket kind_of_ticket)
+        {
+            _albums = new List<string>();
+            _artists = new List<string>();
+
+            _kindOfTicket = kind_of_ticket;
+			_intAud = inter_aud;
+            _tracks = trackLst;
+            
+            foreach (Track track in trackLst)
+            {
+                if (track.AlbumName != null && !_albums.Contains(track.AlbumName)) _albums.Add(track.AlbumName);
+                if (track.ArtistName != null && !_artists.Contains(track.ArtistName)) _artists.Add(track.ArtistName);
+            }
+            BuildComponent();
 		}
-		
-		public PanelAlbum(Interface_audio inter_aud, List<Album> list_alb, string kind_of_ticket)
-		{
-			kindOfTicket = kind_of_ticket;
-			listAlbum = list_alb;
-			if(listAlbum.Count>0) artist = listAlbum[0].My_Artist;
-			int_aud = inter_aud;
-			InitializeComponent();
-		}
-		#endregion
-		
-		#region Methods
-		private void InitializeComponent()
-		{
-			this.BackColor = Color.FromArgb(30, 30, 30);
-			this.Width = 100;
-			this.Height = 134;
-			this.MouseHover += new EventHandler(PanelAlbum_MouseHover);
-			this.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
-			this.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
+        #endregion
+
+        #region Methods
+        private void BuildComponent()
+        {
+            BuildComponenCommonBase();
+            switch (_kindOfTicket)
+            {
+                case Ticket.ALBUM:
+                    BuildComponentAlbum();
+                    break;
+                case Ticket.ARTIST:
+                    BuildComponentArtist();
+                    break;
+                case Ticket.FOLDER:
+                    BuildComponentFolder();
+                    break;
+                case Ticket.TYPE:
+                    BuildComponentType();
+                    break;
+            }
+        }
+        private void BuildComponenCommonBase()
+        {
+            this.BackColor = Color.FromArgb(30, 30, 30);
+            this.Width = 100;
+            this.Height = 134;
+            this.MouseHover += new EventHandler(PanelAlbum_MouseHover);
+            this.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
+            this.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
+        }
+        private void BuildComponentAlbum()
+        {
+			_labelMain = new Label();
+			_labelMain.Top = 4;
+			_labelMain.Left = 4;
+			_labelMain.Width = this.Width;
+			_labelMain.Height = 14;
+			_labelMain.ForeColor = Color.White;
+			_labelMain.MouseHover += new EventHandler(PanelAlbum_MouseHover);
+			_labelMain.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
+			_labelMain.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
+            _labelMain.Text = _albums.Count > 0 ? _albums[0] : "Unknow"; 
+			this.Controls.Add(_labelMain);
 			
-			labelArtist = new Label();
-			labelArtist.Top = 4;
-			labelArtist.Left = 4;
-			labelArtist.Width = this.Width;
-			labelArtist.Height = 14;
-			labelArtist.ForeColor = Color.White;
-			labelArtist.MouseHover += new EventHandler(PanelAlbum_MouseHover);
-			labelArtist.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
-			labelArtist.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
-			if(listAlbum==null) labelArtist.Text = album.My_Artist.Name;
-			else labelArtist.Text = artist.Name;
-			this.Controls.Add(labelArtist);
+			//_labelSecond = new Label();
+			//_labelSecond.Top = 22;
+			//_labelSecond.Left = 4;
+			//_labelSecond.Width = this.Width;
+			//_labelSecond.Height = 14;
+			//_labelSecond.ForeColor = Color.White;
+			//_labelSecond.MouseHover += new EventHandler(PanelAlbum_MouseHover);
+			//_labelSecond.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
+			//_labelSecond.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
+   //         _labelSecond.Text = _artists.Count > 0 ? _artists[0] : "Unknow";
+   //         this.Controls.Add(_labelSecond);
 			
-			labelAlbum = new Label();
-			labelAlbum.Top = 22;
-			labelAlbum.Left = 4;
-			labelAlbum.Width = this.Width;
-			labelAlbum.Height = 14;
-			labelAlbum.ForeColor = Color.White;
-			labelAlbum.MouseHover += new EventHandler(PanelAlbum_MouseHover);
-			labelAlbum.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
-			labelAlbum.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
-			if(listAlbum==null) labelAlbum.Text = album.Name;
-			else labelAlbum.Text = "...";
-			this.Controls.Add(labelAlbum);
-			
-			if(album!=null)
+			if(_albums!=null)
 			{
-				picture0 = new PictureBox();
-				if(!string.IsNullOrEmpty(album.Path_cover_smart)) 
+				_pictureMain = new PictureBox();
+				if(!string.IsNullOrEmpty(_tracks[0].Path_cover_smart)) 
 				{
 					try 
 					{
-						picture0.BackgroundImage = new Bitmap(album.Path_cover_smart);
+						_pictureMain.BackgroundImage = new Bitmap(_tracks[0].Path_cover_smart);
 					} 
 					catch (Exception exp2700) 
 					{
-						picture0.BackgroundImage = int_aud.Tsm.Gui.imageListFicheAudio.Images[int_aud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
-						Log.write("[ WRN : 2700 ] Cannot open bitmap file.\n" + exp2700.Message);
+						_pictureMain.BackgroundImage = _intAud.Tsm.Gui.imageListFicheAudio.Images[_intAud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
+						Log.Write("[ WRN : 2700 ] Cannot open bitmap file.\n" + exp2700.Message);
 					}
 				}
-				else picture0.BackgroundImage = int_aud.Tsm.Gui.imageListFicheAudio.Images[int_aud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
-				picture0.BackgroundImageLayout = ImageLayout.Stretch;
-				picture0.Width = 90;
-				picture0.Height = 90;
-				picture0.Top = 40;
-				picture0.Left = 5;
-				picture0.MouseHover += new EventHandler(PanelAlbum_MouseHover);
-				picture0.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
-				picture0.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
-				this.Controls.Add(picture0);
+				else _pictureMain.BackgroundImage = _intAud.Tsm.Gui.imageListFicheAudio.Images[_intAud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
+				_pictureMain.BackgroundImageLayout = ImageLayout.Stretch;
+				_pictureMain.Width = 90;
+				_pictureMain.Height = 90;
+				_pictureMain.Top = 40;
+				_pictureMain.Left = 5;
+				_pictureMain.MouseHover += new EventHandler(PanelAlbum_MouseHover);
+				_pictureMain.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
+				_pictureMain.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
+				this.Controls.Add(_pictureMain);
 			}
 			else
 			{
 				BuildMultipleAlbum();
 			}
-		}
-		private void BuildMultipleAlbum()
+        }
+        private void BuildComponentArtist()
+        {
+            _labelMain = new Label();
+            _labelMain.Top = 4;
+            _labelMain.Left = 4;
+            _labelMain.Width = this.Width;
+            _labelMain.Height = 14;
+            _labelMain.ForeColor = Color.White;
+            _labelMain.MouseHover += new EventHandler(PanelAlbum_MouseHover);
+            _labelMain.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
+            _labelMain.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
+            _labelMain.Text = _artists.Count > 0 ? _artists[0] : "Unknow";
+            this.Controls.Add(_labelMain);
+            
+            _pictureMain = new PictureBox();
+            _pictureMain.BackgroundImage = _intAud.Tsm.Gui.imageListFicheAudio.Images[_intAud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("artist")];
+            _pictureMain.BackgroundImageLayout = ImageLayout.Center;
+            _pictureMain.Width = 90;
+            _pictureMain.Height = 90;
+            _pictureMain.Top = 40;
+            _pictureMain.Left = 5;
+            _pictureMain.MouseHover += new EventHandler(PanelAlbum_MouseHover);
+            _pictureMain.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
+            _pictureMain.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
+            this.Controls.Add(_pictureMain);
+        }
+        private void BuildComponentFolder()
+        {
+
+        }
+        private void BuildComponentType()
+        {
+
+        }
+        private void BuildMultipleAlbum()
 		{
-			if(listAlbum.Count > 0)
+			if(_albums.Count > 0)
 			{
-				picture0 = new PictureBox();
-				if(!string.IsNullOrEmpty(listAlbum[0].Path_cover_smart)) picture0.BackgroundImage = new Bitmap(listAlbum[0].Path_cover_smart);
-				else picture0.BackgroundImage = int_aud.Tsm.Gui.imageListFicheAudio.Images[int_aud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
-				picture0.BackgroundImageLayout = ImageLayout.Stretch;
-				picture0.Width = 40;
-				picture0.Height = 40;
-				picture0.Top = 40;
-				picture0.Left = 5;
-				picture0.MouseHover += new EventHandler(PanelAlbum_MouseHover);
-				picture0.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
-				picture0.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
-				this.Controls.Add(picture0);
+				_pictureMain = new PictureBox();
+				if(!string.IsNullOrEmpty(_tracks[0].Path_cover_smart)) _pictureMain.BackgroundImage = new Bitmap(_tracks[0].Path_cover_smart);
+				else _pictureMain.BackgroundImage = _intAud.Tsm.Gui.imageListFicheAudio.Images[_intAud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
+				_pictureMain.BackgroundImageLayout = ImageLayout.Stretch;
+				_pictureMain.Width = 40;
+				_pictureMain.Height = 40;
+				_pictureMain.Top = 40;
+				_pictureMain.Left = 5;
+				_pictureMain.MouseHover += new EventHandler(PanelAlbum_MouseHover);
+				_pictureMain.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
+				_pictureMain.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
+				this.Controls.Add(_pictureMain);
 			}
 			
-			if(listAlbum.Count > 1)
-			{
-				picture1 = new PictureBox();
-				if(!string.IsNullOrEmpty(listAlbum[1].Path_cover_smart)) picture1.BackgroundImage = new Bitmap(listAlbum[1].Path_cover_smart);
-				else picture1.BackgroundImage = int_aud.Tsm.Gui.imageListFicheAudio.Images[int_aud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
-				picture1.BackgroundImageLayout = ImageLayout.Stretch;
-				picture1.Width = 40;
-				picture1.Height = 40;
-				picture1.Top = 40;
-				picture1.Left = 48;
-				picture1.MouseHover += new EventHandler(PanelAlbum_MouseHover);
-				picture1.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
-				picture1.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
-				this.Controls.Add(picture1);
-			}
+			//if(_albums.Count > 1)
+			//{
+			//	_picture1 = new PictureBox();
+			//	if(!string.IsNullOrEmpty(_albums[1].Path_cover_smart)) _picture1.BackgroundImage = new Bitmap(_albums[1].Path_cover_smart);
+			//	else _picture1.BackgroundImage = _intAud.Tsm.Gui.imageListFicheAudio.Images[_intAud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
+			//	_picture1.BackgroundImageLayout = ImageLayout.Stretch;
+			//	_picture1.Width = 40;
+			//	_picture1.Height = 40;
+			//	_picture1.Top = 40;
+			//	_picture1.Left = 48;
+			//	_picture1.MouseHover += new EventHandler(PanelAlbum_MouseHover);
+			//	_picture1.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
+			//	_picture1.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
+			//	this.Controls.Add(_picture1);
+			//}
 			
-			if(listAlbum.Count > 2)
-			{
-				picture2 = new PictureBox();
-				if(!string.IsNullOrEmpty(listAlbum[2].Path_cover_smart)) picture2.BackgroundImage = new Bitmap(listAlbum[2].Path_cover_smart);
-				else picture2.BackgroundImage = int_aud.Tsm.Gui.imageListFicheAudio.Images[int_aud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
-				picture2.BackgroundImageLayout = ImageLayout.Stretch;
-				picture2.Width = 40;
-				picture2.Height = 40;
-				picture2.Top = 87;
-				picture2.Left = 5;
-				picture2.MouseHover += new EventHandler(PanelAlbum_MouseHover);
-				picture2.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
-				picture2.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
-				this.Controls.Add(picture2);
-			}
+			//if(_albums.Count > 2)
+			//{
+			//	_picture2 = new PictureBox();
+			//	if(!string.IsNullOrEmpty(_albums[2].Path_cover_smart)) _picture2.BackgroundImage = new Bitmap(_albums[2].Path_cover_smart);
+			//	else _picture2.BackgroundImage = _intAud.Tsm.Gui.imageListFicheAudio.Images[_intAud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
+			//	_picture2.BackgroundImageLayout = ImageLayout.Stretch;
+			//	_picture2.Width = 40;
+			//	_picture2.Height = 40;
+			//	_picture2.Top = 87;
+			//	_picture2.Left = 5;
+			//	_picture2.MouseHover += new EventHandler(PanelAlbum_MouseHover);
+			//	_picture2.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
+			//	_picture2.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
+			//	this.Controls.Add(_picture2);
+			//}
 			
-			if(listAlbum.Count > 3)
-			{
-				picture3 = new PictureBox();
-				if(!string.IsNullOrEmpty(listAlbum[3].Path_cover_smart)) picture3.BackgroundImage = new Bitmap(listAlbum[3].Path_cover_smart);
-				else picture3.BackgroundImage = int_aud.Tsm.Gui.imageListFicheAudio.Images[int_aud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
-				picture3.BackgroundImageLayout = ImageLayout.Stretch;
-				picture3.Width = 40;
-				picture3.Height = 40;
-				picture3.Top = 87;
-				picture3.Left = 48;
-				picture3.MouseHover += new EventHandler(PanelAlbum_MouseHover);
-				picture3.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
-				picture3.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
-				this.Controls.Add(picture3);
-			}
+			//if(_albums.Count > 3)
+			//{
+			//	_picture3 = new PictureBox();
+			//	if(!string.IsNullOrEmpty(_albums[3].Path_cover_smart)) _picture3.BackgroundImage = new Bitmap(listAlbum[3].Path_cover_smart);
+			//	else _picture3.BackgroundImage = _intAud.Tsm.Gui.imageListFicheAudio.Images[_intAud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
+			//	_picture3.BackgroundImageLayout = ImageLayout.Stretch;
+			//	_picture3.Width = 40;
+			//	_picture3.Height = 40;
+			//	_picture3.Top = 87;
+			//	_picture3.Left = 48;
+			//	_picture3.MouseHover += new EventHandler(PanelAlbum_MouseHover);
+			//	_picture3.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
+			//	_picture3.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
+			//	this.Controls.Add(_picture3);
+			//}
 		}
 		protected virtual void OnTicketClick(object sender, EventArgs e)
 		{
@@ -217,13 +277,11 @@ namespace Droid_Audio
 		{
 			OnTicketClick(sender, e);
 		}
-		
 		private void PanelAlbum_MouseHover(object sender, EventArgs e)
 		{
 			this.BorderStyle = BorderStyle.FixedSingle;
-			this.BackColor = Color.FromArgb(100 ,100 ,100);
+			this.BackColor = Color.FromArgb(150 ,150 ,150);
 		}
-		
 		private void PanelAlbum_MouseLeave(object sender, EventArgs e)
 		{
 			this.BorderStyle = BorderStyle.None;

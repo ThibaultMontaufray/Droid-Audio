@@ -43,6 +43,7 @@ namespace Droid_Audio
             this.imageListFicheAudio16 = new System.Windows.Forms.ImageList(this.components);
             this.imageListTreeview = new System.Windows.Forms.ImageList(this.components);
             this.pictureBoxNavigation = new System.Windows.Forms.PictureBox();
+            this.imageListMenu = new System.Windows.Forms.ImageList(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxNavigation)).BeginInit();
             this.SuspendLayout();
             // 
@@ -52,6 +53,7 @@ namespace Droid_Audio
             this.imageListFicheAudio.TransparentColor = System.Drawing.Color.Transparent;
             this.imageListFicheAudio.Images.SetKeyName(0, "void");
             this.imageListFicheAudio.Images.SetKeyName(1, "none");
+            this.imageListFicheAudio.Images.SetKeyName(2, "artist");
             // 
             // imageListFicheAudio32
             // 
@@ -129,6 +131,24 @@ namespace Droid_Audio
             this.pictureBoxNavigation.TabIndex = 0;
             this.pictureBoxNavigation.TabStop = false;
             // 
+            // imageListMenu
+            // 
+            this.imageListMenu.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageListMenu.ImageStream")));
+            this.imageListMenu.TransparentColor = System.Drawing.Color.Transparent;
+            this.imageListMenu.Images.SetKeyName(0, "MenuBackGround");
+            this.imageListMenu.Images.SetKeyName(1, "MenuAlbumSelected");
+            this.imageListMenu.Images.SetKeyName(2, "MenuArtistSelected");
+            this.imageListMenu.Images.SetKeyName(3, "MenuFolderSelected");
+            this.imageListMenu.Images.SetKeyName(4, "MenuTypeSelected");
+            this.imageListMenu.Images.SetKeyName(5, "MenuAlbum");
+            this.imageListMenu.Images.SetKeyName(6, "MenuAlbumHover");
+            this.imageListMenu.Images.SetKeyName(7, "MenuArtist");
+            this.imageListMenu.Images.SetKeyName(8, "MenuArtistHover");
+            this.imageListMenu.Images.SetKeyName(9, "MenuFolder");
+            this.imageListMenu.Images.SetKeyName(10, "MenuFolderHover");
+            this.imageListMenu.Images.SetKeyName(11, "MenuType");
+            this.imageListMenu.Images.SetKeyName(12, "MenuTypeHover");
+            // 
             // GUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -148,5 +168,6 @@ namespace Droid_Audio
 		public System.Windows.Forms.ImageList imageListFicheAudio32;
 		public System.Windows.Forms.ImageList imageListFicheAudio;
 		public System.Windows.Forms.ImageList imageListManager;
-	}
+        public System.Windows.Forms.ImageList imageListMenu;
+    }
 }
