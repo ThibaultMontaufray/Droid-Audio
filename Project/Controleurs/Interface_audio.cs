@@ -1,4 +1,4 @@
-// Log code 19 - 07
+// Log code 19 - 08
 
 // http://www.developpez.net/forums/d521994/dotnet/langages/csharp/lire-wav-mp3-plus-simplement-possible/
 // http://www.codeproject.com/Articles/14709/Playing-MP3s-using-MCI
@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using NAudio.Wave;
 using System.Xml.Serialization;
 using System.Linq;
+using System.Net;
 
 /// <summary>
 /// Interface for Tobi Assistant application : take care, some french word here to allow Tobi to speak with natural langage.
@@ -566,7 +567,6 @@ namespace Droid_Audio
                     if (!Properties.Settings.Default.Artists.Contains(track.ArtistName))
                     {
                         string artist = string.IsNullOrEmpty(track.ArtistName) ? "Unknow" : track.ArtistName;
-                        Properties.Settings.Default.Artists[artist] = Droid_web.Web; ;
                     }
                     _listTrack.Add(track);
                 }

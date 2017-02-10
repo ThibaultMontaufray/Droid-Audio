@@ -267,7 +267,7 @@ namespace Droid_Audio
 					{
 						Index_X = 5;
 						BuildLabelTitleSortAlpha(alb);
-						BuildAblumDetailsView(tracks.Where(t => t.AlbumName.Equals(alb)).ToList());
+						BuildAblumDetailsView(tracks.Where(t => !string.IsNullOrEmpty(t.AlbumName) && t.AlbumName.Equals(alb)).ToList());
 						succeed = true;
 					}
 				}
