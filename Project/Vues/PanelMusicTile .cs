@@ -301,6 +301,7 @@ namespace Droid_Audio
                             Stream stream = webResponse.GetResponseStream();
                             Properties.Settings.Default.Artists[_artists[0]] = Image.FromStream(stream);
                             Properties.Settings.Default.Save();
+                            var v = Properties.Settings.Default.Artists;
                             webResponse.Close();
                         }
                         catch (Exception exp)
