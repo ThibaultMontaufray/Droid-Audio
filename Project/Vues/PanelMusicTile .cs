@@ -27,7 +27,7 @@ namespace Droid_Audio
             ALBUM,
             ARTIST,
             FOLDER,
-            TYPE
+            GENRE
         }
         #endregion
 
@@ -36,6 +36,7 @@ namespace Droid_Audio
 		private List<string> _albums;
 		private List<string> _artists;
         private List<Track> _tracks;
+        private string _genre;
         private Ticket _kindOfTicket;
 
         private Label _labelSecond;
@@ -61,25 +62,36 @@ namespace Droid_Audio
 		{
 			get { return _kindOfTicket; }
 		}
-		#endregion
-		
-		#region Constructor
-		public PanelMusicTile(Interface_audio inter_aud, List<Track> trackLst, Ticket kind_of_ticket)
+        #endregion
+
+        #region Constructor
+        public PanelMusicTile(Interface_audio inter_aud, List<Track> trackLst, Ticket kind_of_ticket)
         {
             _albums = new List<string>();
             _artists = new List<string>();
 
             _kindOfTicket = kind_of_ticket;
-			_intAud = inter_aud;
+            _intAud = inter_aud;
             _tracks = trackLst;
-            
+
             foreach (Track track in trackLst)
             {
                 if (track.AlbumName != null && !_albums.Contains(track.AlbumName)) _albums.Add(track.AlbumName);
                 if (track.ArtistName != null && !_artists.Contains(track.ArtistName)) _artists.Add(track.ArtistName);
             }
             BuildComponent();
-		}
+        }
+        public PanelMusicTile(Interface_audio inter_aud, string genre, Ticket kind_of_ticket)
+        {
+            _albums = new List<string>();
+            _artists = new List<string>();
+
+            _kindOfTicket = kind_of_ticket;
+            _intAud = inter_aud;
+            _tracks = null;
+            _genre = genre;
+            BuildComponent();
+        }
         #endregion
 
         #region Methods
@@ -97,8 +109,8 @@ namespace Droid_Audio
                 case Ticket.FOLDER:
                     BuildComponentFolder();
                     break;
-                case Ticket.TYPE:
-                    BuildComponentType();
+                case Ticket.GENRE:
+                    BuildComponentGenre();
                     break;
             }
         }
@@ -124,18 +136,6 @@ namespace Droid_Audio
 			_labelMain.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
             _labelMain.Text = _albums.Count > 0 ? _albums[0] : "Unknow"; 
 			this.Controls.Add(_labelMain);
-			
-			//_labelSecond = new Label();
-			//_labelSecond.Top = 22;
-			//_labelSecond.Left = 4;
-			//_labelSecond.Width = this.Width;
-			//_labelSecond.Height = 14;
-			//_labelSecond.ForeColor = Color.White;
-			//_labelSecond.MouseHover += new EventHandler(PanelAlbum_MouseHover);
-			//_labelSecond.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
-			//_labelSecond.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
-   //         _labelSecond.Text = _artists.Count > 0 ? _artists[0] : "Unknow";
-   //         this.Controls.Add(_labelSecond);
 			
 			if(_albums!=null)
 			{
@@ -208,9 +208,47 @@ namespace Droid_Audio
         {
 
         }
-        private void BuildComponentType()
+        private void BuildComponentGenre()
         {
+            _labelMain = new Label();
+            _labelMain.Top = 4;
+            _labelMain.Left = 4;
+            _labelMain.Width = this.Width;
+            _labelMain.Height = 14;
+            _labelMain.ForeColor = Color.White;
+            _labelMain.MouseHover += new EventHandler(PanelAlbum_MouseHover);
+            _labelMain.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
+            _labelMain.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
+            this.Controls.Add(_labelMain);
 
+            _pictureMain = new PictureBox();
+            _pictureMain.BackgroundImageLayout = ImageLayout.Zoom;
+            _pictureMain.Width = 90;
+            _pictureMain.Height = 90;
+            _pictureMain.Top = 40;
+            _pictureMain.Left = 5;
+            _pictureMain.MouseHover += new EventHandler(PanelAlbum_MouseHover);
+            _pictureMain.MouseLeave += new EventHandler(PanelAlbum_MouseLeave);
+            _pictureMain.MouseClick += new MouseEventHandler(PanelAlbum_MouseClick);
+            this.Controls.Add(_pictureMain);
+            
+            if (!string.IsNullOrEmpty(_genre))
+            {
+                _labelMain.Text = _genre;
+                if (_intAud.Tsm.Gui.imageListType.Images.IndexOfKey(_genre) != -1)
+                {
+                    _pictureMain.BackgroundImage = _intAud.Tsm.Gui.imageListType.Images[_intAud.Tsm.Gui.imageListType.Images.IndexOfKey(_genre)];
+                }
+                else
+                {
+                    _pictureMain.BackgroundImage = _intAud.Tsm.Gui.imageListType.Images[_intAud.Tsm.Gui.imageListType.Images.IndexOfKey("other")];
+                }
+            }
+            else
+            {
+                _pictureMain.BackgroundImage = _intAud.Tsm.Gui.imageListType.Images[_intAud.Tsm.Gui.imageListType.Images.IndexOfKey("other")];
+                _labelMain.Text = "Other";
+            }
         }
         private void BuildMultipleAlbum()
 		{

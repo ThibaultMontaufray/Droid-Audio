@@ -62,8 +62,8 @@ namespace Droid_Audio
         private Button _menuType;
 
         private string displayMode;
-		private int index_X;
-		private int index_Y;
+		private int _index_X;
+		private int _index_Y;
 		private bool succeed;
 		private string[] alpha = { "_", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"};
 		//private string[] alpha = {"a", "b", "c"};
@@ -92,14 +92,14 @@ namespace Droid_Audio
 		
 		private int Index_X
 		{
-			get { return index_X; }
-			set { index_X = value; }
+			get { return _index_X; }
+			set { _index_X = value; }
 		}
 		
 		private int Index_Y
 		{
-			get { return index_Y; }
-			set { index_Y = value; }
+			get { return _index_Y; }
+			set { _index_Y = value; }
 		}
 		#endregion
 		
@@ -119,6 +119,43 @@ namespace Droid_Audio
 		{
             panelControlMiddle.Width = panel_middle.Width;
             panelControlMiddle.Height = panel_middle.Height - 150;
+
+            _index_X = 5;
+            _index_Y = 5;
+            
+            foreach (Control ctrl in panelControlMiddle.Controls)
+            {
+                if (_index_X > panelControlMiddle.Width - 120)
+                {
+                    _index_X = 5;
+                    _index_Y += 145;
+                }
+                if (ctrl is Panel)
+                {
+                    (ctrl as Panel).Top = _index_Y;
+                    (ctrl as Panel).Left = _index_X;
+                    Index_X += (ctrl as Panel).Width + 5;
+                }
+                else if (ctrl is Label)
+                {
+                    if ("rowletter".Equals(ctrl.Name))
+                    {
+                        if (_index_Y > 7) { _index_Y += 150; }
+                        _index_X = 5;
+                        (ctrl as Label).Top = _index_Y + 10;
+                        (ctrl as Label).Left = _index_X;
+                        _index_Y += 20;
+                    }
+                    else if ("rowseparation".Equals(ctrl.Name))
+                    {
+                        _index_X = 5;
+                        (ctrl as Label).Top = _index_Y;
+                        (ctrl as Label).Left = _index_X;
+                        _index_X = 5;
+                        _index_Y += 18;
+                    }
+                }
+            }
 
             panelControlLeft.Width = panel_left.Width;
             panelControlLeft.Height = panel_left.Height - 150;
@@ -165,8 +202,9 @@ namespace Droid_Audio
                             CreateLetterFolder(s);
                             break;
                         case Presentation.TYPE:
-                            CreateLetterType(s);
-                            break;
+                            CreateLetterType();
+                            panelControlMiddle.Invalidate();
+                            return;
                         default:
                             Log.Write("[ ERR : 2320 ] Error, cannot make the filter with you're option : " + displayMode);
                             break;
@@ -451,10 +489,11 @@ namespace Droid_Audio
 		}
         private void BuildLabelTitleSortAlpha(string lettre)
 		{
-			Label labelAlpha = new Label();
+            Label labelAlpha = new Label();
 			labelAlpha.Top = Index_Y + 10;
 			labelAlpha.Left = Index_X;
             labelAlpha.Text = lettre;
+            labelAlpha.Name = "rowletter";
             labelAlpha.ForeColor = Color.White;
             labelAlpha.Font = new System.Drawing.Font("Calibri", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             labelAlpha.Width = panelControlMiddle.Width;
@@ -468,7 +507,8 @@ namespace Droid_Audio
             _labelSeparation = new Label();
 			_labelSeparation.Width = panelControlMiddle.Width;
 			_labelSeparation.Height = 14;
-			for (int i=0 ; i<panelControlMiddle.Width/6 ; i++) _labelSeparation.Text += "_";
+            _labelSeparation.Name = "rowseparation";
+            for (int i=0 ; i<panelControlMiddle.Width/6 ; i++) _labelSeparation.Text += "_";
 			_labelSeparation.Top = Index_Y;
 			_labelSeparation.Left = Index_X;
             _labelSeparation.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
@@ -479,6 +519,11 @@ namespace Droid_Audio
         {
             foreach (string artistName in artists)
             {
+                if (Index_X > panelControlMiddle.Width - 120)
+                { 
+                    Index_X = 5;
+                    Index_Y += 145;
+                }
                 PanelMusicTile pa = new PanelMusicTile(_intAud, _intAud.ListTrack.Where(t => !string.IsNullOrEmpty(t.ArtistName) && t.ArtistName.Equals(artistName)).ToList(), PanelMusicTile.Ticket.ARTIST);
                 pa.TicketClick += new delegatePanelMusicTile(pa_TicketClick);
                 pa.Top = Index_Y;
@@ -491,6 +536,11 @@ namespace Droid_Audio
         {
             foreach (string folderName in folders)
             {
+                if (Index_X > panelControlMiddle.Width - 120)
+                {
+                    Index_X = 5;
+                    Index_Y += 145;
+                }
                 PanelMusicTile pa = new PanelMusicTile(_intAud, _intAud.ListTrack.Where(t => !string.IsNullOrEmpty(t.Path_track) && t.Path_track.Contains(folderName)).ToList(), PanelMusicTile.Ticket.FOLDER);
                 pa.TicketClick += new delegatePanelMusicTile(pa_TicketClick);
                 pa.Top = Index_Y;
@@ -500,9 +550,14 @@ namespace Droid_Audio
             }
         }
         private void BuildAlbumView(List<string> albums)
-		{
+        {
             foreach (string albumName in albums)
             {
+                if (Index_X > panelControlMiddle.Width - 120)
+                {
+                    Index_X = 5;
+                    Index_Y += 145;
+                }
                 PanelMusicTile pa = new PanelMusicTile(_intAud, _intAud.ListTrack.Where(t => !string.IsNullOrEmpty(t.AlbumName) && t.AlbumName.Equals(albumName)).ToList(), PanelMusicTile.Ticket.ALBUM);
                 pa.TicketClick += new delegatePanelMusicTile(pa_TicketClick);
                 pa.Top = Index_Y;
@@ -511,7 +566,24 @@ namespace Droid_Audio
                 Index_X += pa.Width + 5;
             }
         }
-		private void BuildAblumDetailsView(List<Track> tracks)
+        private void BuildGenreView(List<string> genres)
+        {
+            foreach (string genre in genres)
+            {
+                if (Index_X > panelControlMiddle.Width - 120)
+                {
+                    Index_X = 5;
+                    Index_Y += 145;
+                }
+                PanelMusicTile pa = new PanelMusicTile(_intAud, genre, PanelMusicTile.Ticket.GENRE);
+                pa.TicketClick += new delegatePanelMusicTile(pa_TicketClick);
+                pa.Top = Index_Y;
+                pa.Left = Index_X;
+                panelControlMiddle.Controls.Add(pa);
+                Index_X += pa.Width + 5;
+            }
+        }
+        private void BuildAblumDetailsView(List<Track> tracks)
 		{
 			int refindex = Index_Y;
 			
@@ -810,26 +882,44 @@ namespace Droid_Audio
                 Log.Write("[ ERR : 2323 ] Error while presenting \"" + letter + "\" part for folder: " + exp.Message);
             }
         }
-        private void CreateLetterType(string letter)
+        private void CreateLetterType()
         {
-            //try
-            //{
-            //    List<Track> groupTrack = new List<Track>();
-            //    foreach (Track t in _intAud.ListTrack.Where(t => !string.IsNullOrEmpty(t.Type) && t.Type.ToLower().StartsWith(letter)))
-            //    {
-            //        groupTrack.Add(t);
-            //        succeed = true;
-            //    }
-            //    if (groupTrack.Count > 0)
-            //    {
-            //        BuildLabelTitleSortAlpha(letter.ToUpper());
-            //        BuildAlbumView(groupTrack);
-            //    }
-            //}
-            //catch (Exception exp)
-            //{
-            //    Log.Write("[ ERR : 2324 ] Error while presenting \"" + letter + "\" part for album: " + exp.Message);
-            //}
+            string genre;
+            try
+            {
+                List<string> groupGenre = new List<string>();
+                foreach (Track t in _intAud.ListTrack)
+                {
+                    if (t.Genre != null && t.Genre.Count > 0 && !string.IsNullOrEmpty(t.Genre[0]))
+                    {
+                        genre = t.Genre[0].ToLower();
+                        CleanGenre(ref genre);
+                        if (!groupGenre.Contains(genre)) {  groupGenre.Add(genre); }
+                    }
+                    succeed = true;
+                }
+                groupGenre.Sort();
+                BuildGenreView(groupGenre);
+            }
+            catch (Exception exp)
+            {
+                Log.Write("[ ERR : 2324 ] Error while presenting genre : " + exp.Message);
+            }
+        }
+        private void CleanGenre(ref string genre)
+        {
+            if (!string.IsNullOrEmpty(genre))
+            {
+                genre = genre.ToLower();
+
+                if (genre.Contains("rock")) { genre = "rock"; }
+                if (genre.Contains("electr")) { genre = "electro"; }
+                if (genre.Contains("folk")) { genre = "folk"; }
+                if (genre.Contains("metal")) { genre = "metal"; }
+                if (genre.Contains("irlan")) { genre = "irlandais"; }
+                if (genre.Contains("unknow")) { genre = "other"; }
+                if (genre.Contains("classi")) { genre = "classical"; }
+            }
         }
         #endregion
 

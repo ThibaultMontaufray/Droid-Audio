@@ -37,7 +37,7 @@ namespace Droid_Audio
         private string _path_cover_smart;
         private string _path_cover_large;
         private string name;
-        private string _type;
+        private List<string> _genre;
         private List<string> _albums;
         private List<string> _artists;
 
@@ -63,10 +63,10 @@ namespace Droid_Audio
         #endregion
 
         #region Properties
-        public string Type
+        public List<string> Genre
         {
-            get { return _type; }
-            set { _type = value; }
+            get { return _genre; }
+            set { _genre = value; }
         }
         public uint Number
         {
@@ -149,6 +149,7 @@ namespace Droid_Audio
                 _albums.Add(tagFile.Tag.Album);
                 _year = tagFile.Tag.Year;
                 _number = tagFile.Tag.Track;
+                _genre = new List<string>(tagFile.Tag.Genres);
             }
         }
         public string Path_cover_smart
@@ -258,6 +259,7 @@ namespace Droid_Audio
         #region Constructor
         public Track()
         {
+            _genre = new List<string>();
             _albums = new List<string>();
             _artists = new List<string>();
 
@@ -265,6 +267,7 @@ namespace Droid_Audio
         }
         public Track(string filePath)
         {
+            _genre = new List<string>();
             _albums = new List<string>();
             _artists = new List<string>();
             Path_track = filePath;
@@ -273,6 +276,7 @@ namespace Droid_Audio
         }
         public Track(string filePath, Interface_audio ia)
         {
+            _genre = new List<string>();
             _albums = new List<string>();
             _artists = new List<string>();
             Path_track = filePath;
@@ -423,25 +427,31 @@ namespace Droid_Audio
 
             if (_path_track != null)
             { 
-                switch (_format.ToUpper())
-                {
-                    case "WAV":
-                        _mainOutputStream = new WaveFileReader(_path_track);
-                        break;
-                    case "MP3":
-                        _mainOutputStream = new Mp3FileReader(_path_track);
-                        break;
-                    case "CUE":
-                        _mainOutputStream = new CueWaveFileReader(_path_track);
-                        break;
-                    case "AIFF":
-                        _mainOutputStream = new AiffFileReader(_path_track);
-                        break;
-                    default:
-                        _mainOutputStream = new AudioFileReader(_path_track);
-                        break;
+                if (_format != null)
+                { 
+                    switch (_format.ToUpper())
+                    {
+                        case "WAV":
+                            _mainOutputStream = new WaveFileReader(_path_track);
+                            break;
+                        case "MP3":
+                            _mainOutputStream = new Mp3FileReader(_path_track);
+                            break;
+                        case "CUE":
+                            _mainOutputStream = new CueWaveFileReader(_path_track);
+                            break;
+                        case "AIFF":
+                            _mainOutputStream = new AiffFileReader(_path_track);
+                            break;
+                        default:
+                            _mainOutputStream = new AudioFileReader(_path_track);
+                            break;
+                    }
                 }
-            
+                else
+                {
+                    _mainOutputStream = new AudioFileReader(_path_track);
+                }
                 _volumeStream = new WaveChannel32(_mainOutputStream);
                 _player = new WaveOutEvent();
                 _player.Init(_volumeStream);
@@ -675,7 +685,6 @@ namespace Droid_Audio
 				}
 			}
 		}
-
 		private bool MuteAll
 		{
 			get
@@ -698,7 +707,6 @@ namespace Droid_Audio
 			}
 
 		}
-
 		private bool MuteLeft
 		{
 			get
@@ -721,7 +729,6 @@ namespace Droid_Audio
 			}
 
 		}
-
 		private bool MuteRight
 		{
 			get
@@ -744,7 +751,6 @@ namespace Droid_Audio
 			}
 
 		}
-
 		private int VolumeAll
 		{
 			get
@@ -761,7 +767,6 @@ namespace Droid_Audio
 				}
 			}
 		}
-
 		private int VolumeBass
 		{
 			get
@@ -778,7 +783,6 @@ namespace Droid_Audio
 				}
 			}
 		}
-
 		private int VolumeLeft
 		{
 			get
@@ -795,7 +799,6 @@ namespace Droid_Audio
 				}
 			}
 		}
-
 		private int VolumeRight
 		{
 			get
@@ -812,7 +815,6 @@ namespace Droid_Audio
 				}
 			}
 		}
-
 		private int VolumeTreble
 		{
 			get

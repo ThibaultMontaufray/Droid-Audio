@@ -564,10 +564,6 @@ namespace Droid_Audio
                 track = new Track(filePath);
                 if (!_listTrack.Contains(track))
                 {
-                    if (!Properties.Settings.Default.Artists.Contains(track.ArtistName))
-                    {
-                        string artist = string.IsNullOrEmpty(track.ArtistName) ? "Unknow" : track.ArtistName;
-                    }
                     _listTrack.Add(track);
                 }
             }

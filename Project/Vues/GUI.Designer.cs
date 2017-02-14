@@ -44,6 +44,7 @@ namespace Droid_Audio
             this.imageListTreeview = new System.Windows.Forms.ImageList(this.components);
             this.pictureBoxNavigation = new System.Windows.Forms.PictureBox();
             this.imageListMenu = new System.Windows.Forms.ImageList(this.components);
+            this.imageListType = new System.Windows.Forms.ImageList(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxNavigation)).BeginInit();
             this.SuspendLayout();
             // 
@@ -149,6 +150,29 @@ namespace Droid_Audio
             this.imageListMenu.Images.SetKeyName(11, "MenuType");
             this.imageListMenu.Images.SetKeyName(12, "MenuTypeHover");
             // 
+            // imageListType
+            // 
+            this.imageListType.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageListType.ImageStream")));
+            this.imageListType.TransparentColor = System.Drawing.Color.Transparent;
+            this.imageListType.Images.SetKeyName(0, "blues");
+            this.imageListType.Images.SetKeyName(1, "classical");
+            this.imageListType.Images.SetKeyName(2, "country");
+            this.imageListType.Images.SetKeyName(3, "electro");
+            this.imageListType.Images.SetKeyName(4, "folk");
+            this.imageListType.Images.SetKeyName(5, "gospel");
+            this.imageListType.Images.SetKeyName(6, "hiphop");
+            this.imageListType.Images.SetKeyName(7, "jazz");
+            this.imageListType.Images.SetKeyName(8, "metal");
+            this.imageListType.Images.SetKeyName(9, "other");
+            this.imageListType.Images.SetKeyName(10, "pop");
+            this.imageListType.Images.SetKeyName(11, "punk");
+            this.imageListType.Images.SetKeyName(12, "rap");
+            this.imageListType.Images.SetKeyName(13, "rb");
+            this.imageListType.Images.SetKeyName(14, "reggae");
+            this.imageListType.Images.SetKeyName(15, "rock");
+            this.imageListType.Images.SetKeyName(16, "soundtrack");
+            this.imageListType.Images.SetKeyName(17, "various");
+            // 
             // GUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -169,5 +193,6 @@ namespace Droid_Audio
 		public System.Windows.Forms.ImageList imageListFicheAudio;
 		public System.Windows.Forms.ImageList imageListManager;
         public System.Windows.Forms.ImageList imageListMenu;
+        public System.Windows.Forms.ImageList imageListType;
     }
 }
