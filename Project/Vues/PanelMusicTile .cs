@@ -1,4 +1,4 @@
-﻿// Log code 27 01
+﻿// Log code 27 02
 
 /*
  * User: Thibault MONTAUFRAY
@@ -202,6 +202,7 @@ namespace Droid_Audio
             catch (Exception exp)
             {
                 Log.Write("[ WRN : 2701 ] Cannot load artist picture async.\n" + exp.Message);
+                _pictureMain.BackgroundImage = _intAud.Tsm.Gui.imageListFicheAudio.Images[_intAud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("artist")];
             }
         }
         private void BuildComponentFolder()
@@ -327,7 +328,7 @@ namespace Droid_Audio
             {
                 try
                 {
-                    if (Properties.Settings.Default.Artists[_artists[0]] == null)
+                    if (!_intAud.ArtistPictures.ContainsKey(_artists[0]) || _intAud.ArtistPictures[_artists[0]] == null)
                     {
                         try
                         {
@@ -337,9 +338,9 @@ namespace Droid_Audio
                             webRequest.Timeout = 30000;
                             WebResponse webResponse = webRequest.GetResponse();
                             Stream stream = webResponse.GetResponseStream();
-                            Properties.Settings.Default.Artists[_artists[0]] = Image.FromStream(stream);
-                            Properties.Settings.Default.Save();
-                            var v = Properties.Settings.Default.Artists;
+
+                            _intAud.ArtistPictures[_artists[0]] = ImageToString(Image.FromStream(stream));
+                            _intAud.SaveArtist();
                             webResponse.Close();
                         }
                         catch (Exception exp)
@@ -347,9 +348,9 @@ namespace Droid_Audio
                             Log.Write("[ ERR : 1908 ] Error while loading artist picture.\n\n" + exp.Message);
                         }
                     }
-                    if (Properties.Settings.Default.Artists[_artists[0]] != null)
+                    if (_intAud.ArtistPictures[_artists[0]] != null)
                     {
-                        return Properties.Settings.Default.Artists[_artists[0]] as Image;
+                        return StringToImage(_intAud.ArtistPictures[_artists[0]].ToString());
                     }
                 }
                 catch (Exception exp)
@@ -360,6 +361,28 @@ namespace Droid_Audio
             return null;
         }
         #endregion
+
+        // TODO : migrate this in Droid_Image
+        private string ImageToString(Image img)
+        {
+            MemoryStream ms = new MemoryStream();
+            img.Save(ms, img.RawFormat);
+            byte[] array = ms.ToArray();
+            string imgString = Convert.ToBase64String(array);
+            return Convert.ToBase64String(array);
+        }
+        // TODO : migrate this in Droid_Image
+        private Image StringToImage(string imageString)
+        {
+            if (imageString == null)
+            {
+                Log.Write("[ INF : 2702 ] Image string doesn't exist.");
+                return null;
+            }
+            byte[] array = Convert.FromBase64String(imageString);
+            Image image = Image.FromStream(new MemoryStream(array));
+            return image;
+        }
 
         #region Event
         private void PanelAlbum_MouseClick(object sender, MouseEventArgs e)

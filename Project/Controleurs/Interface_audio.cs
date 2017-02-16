@@ -16,6 +16,8 @@ using NAudio.Wave;
 using System.Xml.Serialization;
 using System.Linq;
 using System.Net;
+using System.Collections.Specialized;
+using System.Diagnostics;
 
 /// <summary>
 /// Interface for Tobi Assistant application : take care, some french word here to allow Tobi to speak with natural langage.
@@ -46,12 +48,18 @@ namespace Droid_Audio
         private List<string> _musicFolders;
         private string _convertSrcFile;
         private string _convertTrgFile;
+        private Dictionary<string, string> _artistPictures;
         
         public event delegateInterfaceMusic TicketClose;
 		public event delegateInterfaceMusic Disposed;
         #endregion
 
         #region Properties
+        public Dictionary<string, string> ArtistPictures
+        {
+            get { return _artistPictures; }
+            set { _artistPictures = value; }
+        }
         public string ConvertTargetFile
         {
             get { return _convertTrgFile; }
@@ -248,8 +256,17 @@ namespace Droid_Audio
                 case "wavtomp3":
                     LaunchConvertWavToMp3();
                     break;
+                case "mp4tomp3":
+                    LaunchConvertMp4ToMp3();
+                    break;
+                case "mp4toflac":
+                    LaunchConvertMp4ToFlac();
+                    break;
                 case "getartistpicture":
                     LaunchGetArtistPicture();
+                    break;
+                case "downloadyoutube":
+                    LaunchDownloadYoutube();
                     break;
             }
 		}
@@ -277,6 +294,17 @@ namespace Droid_Audio
             SaveMusicFolders();
             SaveAudioRecurrent(currentAudioPath);
             SaveAudioLib();
+        }
+        public void SaveArtist()
+        {
+            foreach (var item in _artistPictures)
+            {
+                if (!Properties.Settings.Default.Artists.Contains(item.Key + "#" + item.Value))
+                {
+                    Properties.Settings.Default.Artists.Add(item.Key + "#" + item.Value);
+                }
+            }
+            Properties.Settings.Default.Save();
         }
 
         #region ACTION
@@ -382,22 +410,109 @@ namespace Droid_Audio
 		}
         private void LaunchConvertWavToMp3()
         { 
+            if (string.IsNullOrEmpty(_convertSrcFile)) { CheckConvertFile("wav", ".mp3"); }
+
             using (var reader = new NAudio.Wave.AudioFileReader(_convertSrcFile))
             using (var writer = new NAudio.Lame.LameMP3FileWriter(_convertTrgFile, reader.WaveFormat, NAudio.Lame.LAMEPreset.STANDARD))
             {
                 reader.CopyTo(writer);
             }
+            _convertSrcFile = string.Empty;
+            _convertTrgFile = string.Empty;
         }
         private void LaunchConvertMp3ToWav()
         {
+            if (string.IsNullOrEmpty(_convertSrcFile)) { CheckConvertFile("mp3", ".wav"); }
+
             using (var reader = new Mp3FileReader(_convertSrcFile))
             using (var writer = new WaveFileWriter(_convertTrgFile, reader.WaveFormat))
             { 
                 reader.CopyTo(writer);
             }
+            _convertSrcFile = string.Empty;
+            _convertTrgFile = string.Empty;
+        }
+        private void LaunchConvertMp4ToMp3()
+        {
+            if (string.IsNullOrEmpty(_convertSrcFile)) { CheckConvertFile("mp4", ".mp3"); }
+
+            if (File.Exists(_convertTrgFile))
+            {
+                File.Delete(_convertTrgFile);
+            }
+            var ffmpeg = new Process
+            {
+                StartInfo = { UseShellExecute = false, RedirectStandardError = true, FileName = "../../Resources/ffmpeg" }
+            };
+            var arguments = String.Format(@"-i ""{0}"" -c:a mp3 ""{1}""", _convertSrcFile, _convertTrgFile);
+            ffmpeg.StartInfo.Arguments = arguments;
+            try
+            {
+                if (!ffmpeg.Start())
+                {
+                    Debug.WriteLine("Error starting");
+                    return;
+                }
+                var reader = ffmpeg.StandardError;
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    Debug.WriteLine(line);
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.WriteLine(exception.ToString());
+                return;
+            }
+            ffmpeg.Close();
+            _convertSrcFile = string.Empty;
+            _convertTrgFile = string.Empty;
+        }
+        private void LaunchConvertMp4ToFlac()
+        {
+            if (string.IsNullOrEmpty(_convertSrcFile)) { CheckConvertFile("mp4", ".flac"); }
+
+            if (File.Exists(_convertTrgFile))
+            {
+                File.Delete(_convertTrgFile);
+            }
+            var ffmpeg = new Process
+            {
+                StartInfo = { UseShellExecute = false, RedirectStandardError = true, FileName = "../../Resources/ffmpeg" }
+            };
+            var arguments = String.Format(@"-i ""{0}"" -c:a flac ""{1}""", _convertSrcFile, _convertTrgFile);
+            ffmpeg.StartInfo.Arguments = arguments;
+            try
+            {
+                if (!ffmpeg.Start())
+                {
+                    Debug.WriteLine("Error starting");
+                    return;
+                }
+                var reader = ffmpeg.StandardError;
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    Debug.WriteLine(line);
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.WriteLine(exception.ToString());
+                return;
+            }
+            ffmpeg.Close();
+            _convertSrcFile = string.Empty;
+            _convertTrgFile = string.Empty;
         }
         private void LaunchGetArtistPicture()
         {
+        }
+        private void LaunchDownloadYoutube()
+        {
+            Downloader dld = new Downloader(this);
+            dld.Show();
         }
         #endregion
 
@@ -411,8 +526,22 @@ namespace Droid_Audio
             _recentAudio = new List<string>();
             _musicFolders = new List<string>();
             _listTrack = new List<Track>();
+            _artistPictures = new Dictionary<string, string>();
 
-            if (Properties.Settings.Default.Artists == null) { Properties.Settings.Default.Artists = new System.Collections.Specialized.ListDictionary(); }
+            if (Properties.Settings.Default.Artists == null)
+            {
+                Properties.Settings.Default.Artists = new StringCollection();
+            }
+            else
+            {
+                foreach (string artistPic in Properties.Settings.Default.Artists)
+                {
+                    if (artistPic.Split('#').Length == 2)
+                    {
+                        _artistPictures[artistPic.Split('#')[0]] = artistPic.Split('#')[1];
+                    }
+                }
+            }
             if (Properties.Settings.Default.RecentTitles != null)
             { 
                 foreach (var item in Properties.Settings.Default.RecentTitles)
@@ -443,6 +572,16 @@ namespace Droid_Audio
 
             BuildToolBar();
             BuildPanel();
+        }
+        private void CheckConvertFile(string filter, string targetFormat)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Filter = string.Format("Audio files (.{0})|*.{0};", filter);
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                _convertSrcFile = ofd.FileName;
+                _convertTrgFile = ofd.FileName.Replace(Path.GetExtension(ofd.FileName), targetFormat);
+            }
         }
         private void SaveAudioRecurrent(string filePath)
         {

@@ -65,6 +65,10 @@
       <HintPath>packages\NAudio.Lame.1.0.4\lib\net20\NAudio.Lame.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>packages\Newtonsoft.Json.6.0.6\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="policy.2.0.taglib-sharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=db62eba44689b5b0, processorArchitecture=MSIL">
       <HintPath>packages\taglib.2.1.0.0\lib\policy.2.0.taglib-sharp.dll</HintPath>
       <Private>True</Private>
@@ -104,6 +108,7 @@
   <ItemGroup>
     <Compile Include="Controleurs\GetText.cs" />
     <Compile Include="Controleurs\Program.cs" />
+    <Compile Include="Controleurs\YoutubeExtractor.cs" />
     <Compile Include="Properties\ResourceEnglish.Designer.cs">
       <DependentUpon>ResourceEnglish.resx</DependentUpon>
       <AutoGen>True</AutoGen>
@@ -118,6 +123,12 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>ResourceFrench.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Vues\Downloader.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Vues\Downloader.Designer.cs">
+      <DependentUpon>Downloader.cs</DependentUpon>
     </Compile>
     <Compile Include="Vues\migration_to_Tools4Lib\RichListViewItem.cs" />
     <Compile Include="Vues\Demo.cs">
@@ -180,6 +191,7 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\ResourceFrench.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -187,6 +199,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Vues\Demo.resx">
       <DependentUpon>Demo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Vues\Downloader.resx">
+      <DependentUpon>Downloader.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Vues\Eject.resx">
       <DependentUpon>Eject.cs</DependentUpon>
@@ -216,13 +231,23 @@
     <None Include="Resources\BackgroundImageAudio.jpg" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ffmpeg.exe" />
     <Content Include="libmp3lame.32.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="libmp3lame.64.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Resource Include="Resources\ffmpeg.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
     <Content Include="ServoIconMusic.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="YoutubeExtractor\YoutubeExtractor.csproj">
+      <Project>{ecdc127f-8def-4f99-8300-72c13597339d}</Project>
+      <Name>YoutubeExtractor</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>

@@ -22,6 +22,8 @@ namespace Droid_Audio
         private RibbonButton _rb_convert;
         private RibbonButton _rb_convert_wav_mp3;
         private RibbonButton _rb_convert_mp3_wav;
+        private RibbonButton _rb_convert_mp4_mp3;
+        private RibbonButton _rb_convert_mp4_flac;
 
         private RibbonPanel _panelDefault;
         private RibbonLabel _lbl_title;
@@ -30,6 +32,9 @@ namespace Droid_Audio
         private RibbonLabel _lbl_folder;
         private RibbonLabel _lbl_year;
         private RibbonLabel _lbl_type;
+
+        private RibbonPanel _panelDownload;
+        private RibbonButton _rb_youtube;
         #endregion
 
         #region Properties
@@ -48,6 +53,7 @@ namespace Droid_Audio
 
                 BuildPanelTools();
                 BuildPanelConvert();
+                BuildPanelDownload();
 
                 this.Text = "Music";
 			}
@@ -112,14 +118,24 @@ namespace Droid_Audio
             _rb_convert_mp3_wav.Image = Tools4Libraries.Resources.ResourceIconSet16Default.file_extension_wav;
 
             _rb_convert_wav_mp3 = new RibbonButton("WAV -> MP3");
-            _rb_convert_wav_mp3.Click += _rb_convert_mp3_wav_Click;
+            _rb_convert_wav_mp3.Click += _rb_convert_wav_mp3_Click;
             _rb_convert_wav_mp3.Image = Tools4Libraries.Resources.ResourceIconSet16Default.file_extension_wav;
+
+            _rb_convert_mp4_mp3 = new RibbonButton("MP4 -> MP3");
+            _rb_convert_mp4_mp3.Click += _rb_convert_mp4_mp3_Click;
+            _rb_convert_mp4_mp3.Image = Tools4Libraries.Resources.ResourceIconSet16Default.file_extension_mp4;
+
+            _rb_convert_mp4_flac = new RibbonButton("MP4 -> FLAC");
+            _rb_convert_mp4_flac.Click += _rb_convert_mp4_flac_Click;
+            _rb_convert_mp4_flac.Image = Tools4Libraries.Resources.ResourceIconSet16Default.file_extension_mp4;
 
             _rb_convert = new RibbonButton("Convert");
             _rb_convert.Image = Tools4Libraries.Resources.ResourceIconSet32Default.arrow_switch;
             _rb_convert.Style = RibbonButtonStyle.DropDown;
             _rb_convert.DropDownItems.Add(_rb_convert_mp3_wav);
             _rb_convert.DropDownItems.Add(_rb_convert_wav_mp3);
+            _rb_convert.DropDownItems.Add(_rb_convert_mp4_mp3);
+            _rb_convert.DropDownItems.Add(_rb_convert_mp4_flac);
 
             _panelModification = new RibbonPanel();
             _panelModification.Text = "Modification";
@@ -156,14 +172,30 @@ namespace Droid_Audio
             _panelDefault.Items.Add(_lbl_type);
             this.Panels.Add(_panelDefault);
         }
-
-        private void _rb_convert_mp3_wav_Click(object sender, EventArgs e)
+        private void BuildPanelDownload()
         {
-            throw new NotImplementedException();
+            _rb_youtube = new RibbonButton("YouTube");
+            _rb_youtube.Click += new EventHandler(rb_youtube_Click);
+            _rb_youtube.Image = Tools4Libraries.Resources.ResourceIconSet32Default.youtube;
+            _rb_youtube.SmallImage = Tools4Libraries.Resources.ResourceIconSet16Default.youtube;
+            
+            _panelDownload = new RibbonPanel();
+            _panelDownload.Text = "Download";
+            _panelDownload.Items.Add(_rb_youtube);
+            this.Panels.Add(_panelDownload);
         }
         #endregion
 
         #region Events
+        public void OnAction(EventArgs e)
+        {
+            if (ActionAppened != null) ActionAppened(this, e);
+        }
+        public void rb_youtube_Click(object sender, EventArgs e)
+        {
+            ToolBarEventArgs action = new ToolBarEventArgs("downloadyoutube");
+            OnAction(action);
+        }
         public void tsb_refreshLib_Click(object sender, EventArgs e)
         {
             ToolBarEventArgs action = new ToolBarEventArgs("refreshLib");
@@ -179,10 +211,26 @@ namespace Droid_Audio
             ToolBarEventArgs action = new ToolBarEventArgs("import");
             OnAction(action);
         }
-		public void OnAction(EventArgs e)
-		{
-			if (ActionAppened != null) ActionAppened(this, e);
-		}
-		#endregion
-	}
+        private void _rb_convert_mp3_wav_Click(object sender, EventArgs e)
+        {
+            ToolBarEventArgs action = new ToolBarEventArgs("mp3towav");
+            OnAction(action);
+        }
+        private void _rb_convert_wav_mp3_Click(object sender, EventArgs e)
+        {
+            ToolBarEventArgs action = new ToolBarEventArgs("wavtomp3");
+            OnAction(action);
+        }
+        private void _rb_convert_mp4_mp3_Click(object sender, EventArgs e)
+        {
+            ToolBarEventArgs action = new ToolBarEventArgs("mp4tomp3");
+            OnAction(action);
+        }
+        private void _rb_convert_mp4_flac_Click(object sender, EventArgs e)
+        {
+            ToolBarEventArgs action = new ToolBarEventArgs("mp4toflac");
+            OnAction(action);
+        }
+        #endregion
+    }
 }

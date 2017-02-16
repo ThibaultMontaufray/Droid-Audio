@@ -22,14 +22,14 @@ namespace Droid_Audio
             ALBUM,
             ARTIST,
             FOLDER,
-            TYPE
+            GENRE
         }
         #endregion
 
         #region Attribute
         private Interface_audio _intAud;
 		private int index_fiche_selected;
-        private Presentation _currentPresentation = Presentation.FOLDER;
+        private Presentation _currentPresentation = Presentation.GENRE;
 
         private Button button_pp;
 		private Button button_stop;
@@ -61,7 +61,7 @@ namespace Droid_Audio
         private Button _menuAlbum;
         private Button _menuType;
 
-        private string displayMode;
+        private Presentation displayMode;
 		private int _index_X;
 		private int _index_Y;
 		private bool succeed;
@@ -106,12 +106,14 @@ namespace Droid_Audio
 		#region Constructor
 		public PanelAudio(Interface_audio inter_aud)
 		{
-			displayMode = "Artist";
+			displayMode = Presentation.GENRE;
 			_intAud = inter_aud;
 			listPfaToPlay = new List<RichListViewItem>();
 			InitializeComponent();
 			ButtonsDisable();
-		}
+
+            _menuType_Click(null, null);
+        }
 		#endregion
 		
 		#region Methods public
@@ -201,7 +203,7 @@ namespace Droid_Audio
                         case Presentation.FOLDER:
                             CreateLetterFolder(s);
                             break;
-                        case Presentation.TYPE:
+                        case Presentation.GENRE:
                             CreateLetterType();
                             panelControlMiddle.Invalidate();
                             return;
@@ -283,9 +285,8 @@ namespace Droid_Audio
 		#endregion
 		
 		#region Methods private
-		private void RefreshTitle(List<Track> tracks)
+		private async void RefreshTitle(List<Track> tracks)
 		{
-			int refvalue;
 			Index_Y = 5;
 
             List<string> albums = new List<string>();
@@ -295,27 +296,37 @@ namespace Droid_Audio
             }
 
             panelControlMiddle.Controls.Clear();
-			foreach (string s in listAlpha)
-			{
-				refvalue = Index_Y;
-				succeed = false;
-				foreach (string alb in albums)
-				{
-					if(alb != null && alb.StartsWith(s))
-					{
-						Index_X = 5;
-						BuildLabelTitleSortAlpha(alb);
-						BuildAblumDetailsView(tracks.Where(t => !string.IsNullOrEmpty(t.AlbumName) && t.AlbumName.Equals(alb)).ToList());
-						succeed = true;
-					}
-				}
-				if(succeed && (Index_Y < refvalue + 139))
-				{
-					Index_Y = refvalue + 139;
-				}
-			}
-			panelControlMiddle.Invalidate();
+
+            Task<bool> taskTile = Task.Run(() => BuildTiles(albums, tracks));
+            bool completed = await taskTile;
+
+            panelControlMiddle.Invalidate();
 		}
+        private bool BuildTiles(List<string> albums, List<Track> tracks)
+        {
+            int refvalue;
+            foreach (string s in listAlpha)
+            {
+                refvalue = Index_Y;
+                succeed = false;
+                foreach (string alb in albums)
+                {
+                    if (alb != null && alb.StartsWith(s))
+                    {
+                        Index_X = 5;
+
+                        BuildLabelTitleSortAlpha(alb);
+                        BuildAblumDetailsView(tracks.Where(t => !string.IsNullOrEmpty(t.AlbumName) && t.AlbumName.Equals(alb)).ToList());
+                        succeed = true;
+                    }
+                }
+                if (succeed && (Index_Y < refvalue + 139))
+                {
+                    Index_Y = refvalue + 139;
+                }
+            }
+            return succeed;
+        }
 		private void InitializeComponent()
 		{
 			index_fiche_selected = 0;
@@ -487,7 +498,7 @@ namespace Droid_Audio
 			panelControlMiddle.AutoScroll = true;
 			panel_middle.Controls.Add(panelControlMiddle);
 		}
-        private void BuildLabelTitleSortAlpha(string lettre)
+        private bool BuildLabelTitleSortAlpha(string lettre)
 		{
             Label labelAlpha = new Label();
 			labelAlpha.Top = Index_Y + 10;
@@ -514,8 +525,9 @@ namespace Droid_Audio
             _labelSeparation.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             panelControlMiddle.Controls.Add(_labelSeparation);
 			Index_Y += 18;
+            return true;
         }
-        private void BuildArtistView(List<string> artists)
+        private bool BuildArtistView(List<string> artists)
         {
             foreach (string artistName in artists)
             {
@@ -531,8 +543,9 @@ namespace Droid_Audio
                 panelControlMiddle.Controls.Add(pa);
                 Index_X += pa.Width + 5;
             }
+            return true;
         }
-        private void BuildFoldersView(List<string> folders)
+        private bool BuildFoldersView(List<string> folders)
         {
             foreach (string folderName in folders)
             {
@@ -548,8 +561,9 @@ namespace Droid_Audio
                 panelControlMiddle.Controls.Add(pa);
                 Index_X += pa.Width + 5;
             }
+            return true;
         }
-        private void BuildAlbumView(List<string> albums)
+        private bool BuildAlbumView(List<string> albums)
         {
             foreach (string albumName in albums)
             {
@@ -565,8 +579,9 @@ namespace Droid_Audio
                 panelControlMiddle.Controls.Add(pa);
                 Index_X += pa.Width + 5;
             }
+            return true;
         }
-        private void BuildGenreView(List<string> genres)
+        private bool BuildGenreView(List<string> genres)
         {
             foreach (string genre in genres)
             {
@@ -582,6 +597,7 @@ namespace Droid_Audio
                 panelControlMiddle.Controls.Add(pa);
                 Index_X += pa.Width + 5;
             }
+            return true;
         }
         private void BuildAblumDetailsView(List<Track> tracks)
 		{
@@ -1153,7 +1169,7 @@ namespace Droid_Audio
             _menuFolder.MouseHover += _menuFolder_MouseHover;
             _menuFolder.MouseLeave += _menuFolder_MouseLeave;
 
-            _currentPresentation = Presentation.TYPE;
+            _currentPresentation = Presentation.GENRE;
             RefreshPanelLibrary();
         }
         #endregion
