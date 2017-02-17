@@ -1,9 +1,8 @@
-// Log code : 23 - 24
+// Log code : 23 - 28
 
 using System;
 using System.IO;
 using System.Drawing;
-using System.Security.Cryptography.X509Certificates;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using Tools4Libraries;
@@ -14,15 +13,16 @@ namespace Droid_Audio
 {
 	public delegate void delegateMusic(object sender, EventArgs e);
 	
-	public partial class PanelAudio : Panel
+	public class PanelAudio : Panel
 	{
         #region Enum
-        private enum Presentation
+        public enum Presentation
         {
             ALBUM,
             ARTIST,
             FOLDER,
-            GENRE
+            GENRE,
+            TRACKS
         }
         #endregion
 
@@ -51,10 +51,8 @@ namespace Droid_Audio
         private Label _labelSeparation;
         private Panel panel_current_selection;
 		private Panel panel_navigation;
-        //private Panel panel_list_to_play;
         private RichListView panel_list_to_play;
 
-        //private List<PanelFicheAudio> listPfaToPlay;
         private List<RichListViewItem> listPfaToPlay;
         private Button _menuFolder;
         private Button _menuArtist;
@@ -66,7 +64,6 @@ namespace Droid_Audio
 		private int _index_Y;
 		private bool succeed;
 		private string[] alpha = { "_", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"};
-		//private string[] alpha = {"a", "b", "c"};
 		private List<string> listAlpha;
 		
 		public event delegateMusic TicketSelectedChange;
@@ -79,32 +76,23 @@ namespace Droid_Audio
 		{
 			get { return listPfaToPlay[index_fiche_selected]; }
 		}
-		
 		public bool OpenedCurrentFile
 		{
 			get { return (listPfaToPlay[index_fiche_selected].AssociatedObject as Track).FileOpened; }
 		}
-		
 		private ToolStripMenuAudio tsm
 		{
 			get { return _intAud.Tsm as ToolStripMenuAudio; }
 		}
-		
-		private int Index_X
-		{
-			get { return _index_X; }
-			set { _index_X = value; }
-		}
-		
-		private int Index_Y
-		{
-			get { return _index_Y; }
-			set { _index_Y = value; }
-		}
-		#endregion
-		
-		#region Constructor
-		public PanelAudio(Interface_audio inter_aud)
+		public Presentation CurrentPresentation
+        {
+            get { return _currentPresentation; }
+            set { _currentPresentation = value; }
+        }
+        #endregion
+
+        #region Constructor
+        public PanelAudio(Interface_audio inter_aud)
 		{
 			displayMode = Presentation.GENRE;
 			_intAud = inter_aud;
@@ -136,7 +124,7 @@ namespace Droid_Audio
                 {
                     (ctrl as Panel).Top = _index_Y;
                     (ctrl as Panel).Left = _index_X;
-                    Index_X += (ctrl as Panel).Width + 5;
+                    _index_X += (ctrl as Panel).Width + 5;
                 }
                 else if (ctrl is Label)
                 {
@@ -185,12 +173,12 @@ namespace Droid_Audio
             {
                 listAlpha = new List<string>(alpha);
                 panelControlMiddle.Controls.Clear();
-                Index_Y = 5;
+                _index_Y = 5;
 
                 foreach (string s in listAlpha)
                 {
                     succeed = false;
-                    Index_X = 5;
+                    _index_X = 5;
                     
                     switch (_currentPresentation)
                     {
@@ -213,7 +201,7 @@ namespace Droid_Audio
                     }
                     if (succeed)
                     {
-                        Index_Y += 139;
+                        _index_Y += 139;
                     }
                 }
                 panelControlMiddle.Invalidate();
@@ -282,52 +270,249 @@ namespace Droid_Audio
 		{
 			return LoadTicket(inter_aud, inter_aud.GetTrack(filePath));
 		}
-		#endregion
-		
-		#region Methods private
-		private async void RefreshTitle(List<Track> tracks)
-		{
-			Index_Y = 5;
+        #endregion
 
-            List<string> albums = new List<string>();
-            foreach (Track track in tracks)
-            {
-                if (!albums.Contains(track.AlbumName)) albums.Add(track.AlbumName);
-            }
+        #region Methods private
+        //private async void RefreshTitle(List<Track> tracks)
+        //{
+        //    _index_Y = 5;
 
+        //    List<string> albums = new List<string>();
+        //    foreach (Track track in tracks)
+        //    {
+        //        if (!albums.Contains(track.AlbumName)) albums.Add(track.AlbumName);
+        //    }
+
+        //    panelControlMiddle.Controls.Clear();
+
+        //    Task<bool> taskTile = Task.Run(() => BuildTiles());
+        //    bool completed = await taskTile;
+
+        //    panelControlMiddle.Invalidate();
+        //}
+        private void RefreshTitle(PanelMusicTile musicTile)
+        {
+            _index_Y = 5;
             panelControlMiddle.Controls.Clear();
 
-            Task<bool> taskTile = Task.Run(() => BuildTiles(albums, tracks));
-            bool completed = await taskTile;
+            switch (musicTile.KindOfTicket)
+            {
+                case PanelMusicTile.Ticket.ALBUM:
+                    _currentPresentation = Presentation.TRACKS;
+                    _intAud.ListTrackFiltered = _intAud.ListTrack.Where(t => !string.IsNullOrEmpty(t.AlbumName) && musicTile.TicketAlbums[0].ToLower().Equals(t.AlbumName.ToLower())).ToList();
+                    break;
+                case PanelMusicTile.Ticket.ARTIST:
+                    _currentPresentation = Presentation.ALBUM;
+                    _intAud.ListTrackFiltered = _intAud.ListTrack.Where(t => !string.IsNullOrEmpty(t.ArtistName) && musicTile.TicketArtist[0].ToLower().Equals(t.ArtistName.ToLower())).ToList();
+                    break;
+                case PanelMusicTile.Ticket.FOLDER:
+                    _currentPresentation = Presentation.ALBUM;
+                    _intAud.ListTrackFiltered = _intAud.ListTrack.Where(t => !string.IsNullOrEmpty(t.Path_track) && musicTile.TicketFolders.Contains(t.Path_track)).ToList();
+                    break;
+                case PanelMusicTile.Ticket.GENRE:
+                    _currentPresentation = Presentation.ALBUM;
+                    _intAud.ListTrackFiltered = _intAud.ListTrack.Where(t => t.Genre != null && t.Genre.Count > 0 && musicTile.Genre != null && !string.IsNullOrEmpty(t.Genre[0]) && musicTile.Genre.Equals(t.Genre[0].ToLower())).ToList();
+                    break;
+                default:
+                    _currentPresentation = Presentation.ALBUM;
+                    break;
+            }
+
+            BuildTiles();
+            //Task<bool> taskTile = Task.Run(() => BuildTiles());
+            //bool completed = await taskTile;
 
             panelControlMiddle.Invalidate();
-		}
-        private bool BuildTiles(List<string> albums, List<Track> tracks)
+        }
+        private bool BuildTiles()
         {
-            int refvalue;
-            foreach (string s in listAlpha)
+            bool succeed = false;
+            
+            switch (_currentPresentation)
             {
-                refvalue = Index_Y;
-                succeed = false;
-                foreach (string alb in albums)
-                {
-                    if (alb != null && alb.StartsWith(s))
-                    {
-                        Index_X = 5;
-
-                        BuildLabelTitleSortAlpha(alb);
-                        BuildAblumDetailsView(tracks.Where(t => !string.IsNullOrEmpty(t.AlbumName) && t.AlbumName.Equals(alb)).ToList());
-                        succeed = true;
-                    }
-                }
-                if (succeed && (Index_Y < refvalue + 139))
-                {
-                    Index_Y = refvalue + 139;
-                }
+                case Presentation.ALBUM:
+                    BuildTilesAlbum();
+                    break;
+                case Presentation.ARTIST:
+                    BuildTilesArtist();
+                    break;
+                case Presentation.FOLDER:
+                    BuildTilesFolder();
+                    break;
+                case Presentation.GENRE:
+                    BuildTilesGenre();
+                    break;
+                default:
+                    break;
             }
             return succeed;
         }
-		private void InitializeComponent()
+        private void BuildTilesAlbum()
+        {
+            int refvalue;
+            List<string> albums = new List<string>();
+
+            foreach (Track track in _intAud.ListTrackFiltered)
+            {
+                if (!albums.Contains(track.AlbumName) && track.AlbumName != null)
+                {
+                    albums.Add(track.AlbumName);
+                }
+            }
+            albums.Sort();
+            foreach (string s in listAlpha)
+            {
+                refvalue = _index_Y;
+                succeed = false;
+                foreach (string alb in albums)
+                {
+                    try
+                    {
+                        if (alb != null && alb.ToLower().StartsWith(s))
+                        {
+                            _index_X = 5;
+
+                            BuildLabelTitleSortAlpha(alb);
+                            BuildAblumDetailsView(_intAud.ListTrackFiltered.Where(t => !string.IsNullOrEmpty(t.AlbumName) && t.AlbumName.Equals(alb)).ToList());
+                            succeed = true;
+                        }
+                    }
+                    catch (Exception exp)
+                    {
+                        Log.Write("[ ERR : 2325 ] Cannot create album tile.\n\n" + exp.Message);
+                    }
+                }
+                if (succeed && (_index_Y < refvalue + 139))
+                {
+                    _index_Y = refvalue + 139;
+                }
+            }
+        }
+        private void BuildTilesArtist()
+        {
+            int refvalue;
+            List<string> artists = new List<string>();
+
+            foreach (Track track in _intAud.ListTrackFiltered)
+            {
+                if (!artists.Contains(track.ArtistName) && track.ArtistName != null)
+                {
+                    artists.Add(track.ArtistName);
+                }
+            }
+            artists.Sort();
+            foreach (string s in listAlpha)
+            {
+                refvalue = _index_Y;
+                succeed = false;
+                foreach (string artist in artists)
+                {
+                    try
+                    {
+                        if (artist != null && artist.ToLower().StartsWith(s))
+                        {
+                            _index_X = 5;
+
+                            BuildLabelTitleSortAlpha(artist);
+                            BuildAblumDetailsView(_intAud.ListTrackFiltered.Where(t => !string.IsNullOrEmpty(t.ArtistName) && t.AlbumName.Equals(artist)).ToList());
+                            succeed = true;
+                        }
+                    }
+                    catch (Exception exp)
+                    {
+                        Log.Write("[ ERR : 2326 ] Cannot create album artist.\n\n" + exp.Message);
+                    }
+                }
+                if (succeed && (_index_Y < refvalue + 139))
+                {
+                    _index_Y = refvalue + 139;
+                }
+            }
+        }
+        private void BuildTilesFolder()
+        {
+            int refvalue;
+            List<string> folders = new List<string>();
+
+            foreach (Track track in _intAud.ListTrackFiltered)
+            {
+                if (!folders.Contains(track.Path_track) && track.Path_track != null)
+                {
+                    folders.Add(track.Path_track);
+                }
+            }
+            folders.Sort();
+            foreach (string s in listAlpha)
+            {
+                refvalue = _index_Y;
+                succeed = false;
+                foreach (string folder in folders)
+                {
+                    if (folder != null && folder.ToLower().StartsWith(s))
+                    {
+                        try
+                        {
+                            _index_X = 5;
+
+                            BuildLabelTitleSortAlpha(folder);
+                            BuildAblumDetailsView(_intAud.ListTrackFiltered.Where(t => !string.IsNullOrEmpty(t.Path_track) && t.Path_track.Equals(folder)).ToList());
+                            succeed = true;
+                        }
+                        catch (Exception exp)
+                        {
+                            Log.Write("[ ERR : 2327 ] Cannot create folder tile.\n\n" + exp.Message);
+                        }
+                    }
+                }
+                if (succeed && (_index_Y < refvalue + 139))
+                {
+                    _index_Y = refvalue + 139;
+                }
+            }
+        }
+        private void BuildTilesGenre()
+        {
+            int refvalue;
+            List<string> genres = new List<string>();
+
+            foreach (Track track in _intAud.ListTrackFiltered)
+            {
+                if (track.Genre != null && track.Genre.Count > 0 && !genres.Contains(track.Genre[0]) && track.Genre[0] != null)
+                {
+                    genres.Add(track.Genre[0]);
+                }
+            }
+            genres.Sort();
+            foreach (string s in listAlpha)
+            {
+                refvalue = _index_Y;
+                succeed = false;
+                foreach (string genre in genres)
+                {
+                    if (genre != null && genre.ToLower().StartsWith(s))
+                    {
+                        try
+                        {
+                            _index_X = 5;
+
+                            BuildLabelTitleSortAlpha(genre);
+                            BuildAblumDetailsView(_intAud.ListTrackFiltered.Where(t => t.Genre != null && t.Genre.Count > 0 && t.Genre[0].Equals(genre)).ToList());
+                            succeed = true;
+                        }
+                        catch (Exception exp)
+                        {
+                            Log.Write("[ ERR : 2328 ] Cannot create genre tile.\n\n" + exp.Message);
+                        }
+                    }
+                }
+                if (succeed && (_index_Y < refvalue + 139))
+                {
+                    _index_Y = refvalue + 139;
+                }
+            }
+        }
+
+        private void InitializeComponent()
 		{
 			index_fiche_selected = 0;
 			
@@ -498,11 +683,12 @@ namespace Droid_Audio
 			panelControlMiddle.AutoScroll = true;
 			panel_middle.Controls.Add(panelControlMiddle);
 		}
+
         private bool BuildLabelTitleSortAlpha(string lettre)
 		{
             Label labelAlpha = new Label();
-			labelAlpha.Top = Index_Y + 10;
-			labelAlpha.Left = Index_X;
+			labelAlpha.Top = _index_Y + 10;
+			labelAlpha.Left = _index_X;
             labelAlpha.Text = lettre;
             labelAlpha.Name = "rowletter";
             labelAlpha.ForeColor = Color.White;
@@ -513,35 +699,35 @@ namespace Droid_Audio
             labelAlpha.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             labelAlpha.TextAlign = ContentAlignment.MiddleLeft;
             panelControlMiddle.Controls.Add(labelAlpha);
-            Index_Y += 20;
+            _index_Y += 20;
 
             _labelSeparation = new Label();
 			_labelSeparation.Width = panelControlMiddle.Width;
 			_labelSeparation.Height = 14;
             _labelSeparation.Name = "rowseparation";
             for (int i=0 ; i<panelControlMiddle.Width/6 ; i++) _labelSeparation.Text += "_";
-			_labelSeparation.Top = Index_Y;
-			_labelSeparation.Left = Index_X;
+			_labelSeparation.Top = _index_Y;
+			_labelSeparation.Left = _index_X;
             _labelSeparation.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             panelControlMiddle.Controls.Add(_labelSeparation);
-			Index_Y += 18;
+            _index_Y += 18;
             return true;
         }
         private bool BuildArtistView(List<string> artists)
         {
             foreach (string artistName in artists)
             {
-                if (Index_X > panelControlMiddle.Width - 120)
-                { 
-                    Index_X = 5;
-                    Index_Y += 145;
+                if (_index_X > panelControlMiddle.Width - 120)
+                {
+                    _index_X = 5;
+                    _index_Y += 145;
                 }
                 PanelMusicTile pa = new PanelMusicTile(_intAud, _intAud.ListTrack.Where(t => !string.IsNullOrEmpty(t.ArtistName) && t.ArtistName.Equals(artistName)).ToList(), PanelMusicTile.Ticket.ARTIST);
                 pa.TicketClick += new delegatePanelMusicTile(pa_TicketClick);
-                pa.Top = Index_Y;
-                pa.Left = Index_X;
+                pa.Top = _index_Y;
+                pa.Left = _index_X;
                 panelControlMiddle.Controls.Add(pa);
-                Index_X += pa.Width + 5;
+                _index_X += pa.Width + 5;
             }
             return true;
         }
@@ -549,17 +735,17 @@ namespace Droid_Audio
         {
             foreach (string folderName in folders)
             {
-                if (Index_X > panelControlMiddle.Width - 120)
+                if (_index_X > panelControlMiddle.Width - 120)
                 {
-                    Index_X = 5;
-                    Index_Y += 145;
+                    _index_X = 5;
+                    _index_Y += 145;
                 }
                 PanelMusicTile pa = new PanelMusicTile(_intAud, _intAud.ListTrack.Where(t => !string.IsNullOrEmpty(t.Path_track) && t.Path_track.Contains(folderName)).ToList(), PanelMusicTile.Ticket.FOLDER);
                 pa.TicketClick += new delegatePanelMusicTile(pa_TicketClick);
-                pa.Top = Index_Y;
-                pa.Left = Index_X;
+                pa.Top = _index_Y;
+                pa.Left = _index_X;
                 panelControlMiddle.Controls.Add(pa);
-                Index_X += pa.Width + 5;
+                _index_X += pa.Width + 5;
             }
             return true;
         }
@@ -567,17 +753,17 @@ namespace Droid_Audio
         {
             foreach (string albumName in albums)
             {
-                if (Index_X > panelControlMiddle.Width - 120)
+                if (_index_X > panelControlMiddle.Width - 120)
                 {
-                    Index_X = 5;
-                    Index_Y += 145;
+                    _index_X = 5;
+                    _index_Y += 145;
                 }
                 PanelMusicTile pa = new PanelMusicTile(_intAud, _intAud.ListTrack.Where(t => !string.IsNullOrEmpty(t.AlbumName) && t.AlbumName.Equals(albumName)).ToList(), PanelMusicTile.Ticket.ALBUM);
                 pa.TicketClick += new delegatePanelMusicTile(pa_TicketClick);
-                pa.Top = Index_Y;
-                pa.Left = Index_X;
+                pa.Top = _index_Y;
+                pa.Left = _index_X;
                 panelControlMiddle.Controls.Add(pa);
-                Index_X += pa.Width + 5;
+                _index_X += pa.Width + 5;
             }
             return true;
         }
@@ -585,28 +771,28 @@ namespace Droid_Audio
         {
             foreach (string genre in genres)
             {
-                if (Index_X > panelControlMiddle.Width - 120)
+                if (_index_X > panelControlMiddle.Width - 120)
                 {
-                    Index_X = 5;
-                    Index_Y += 145;
+                    _index_X = 5;
+                    _index_Y += 145;
                 }
                 PanelMusicTile pa = new PanelMusicTile(_intAud, genre, PanelMusicTile.Ticket.GENRE);
                 pa.TicketClick += new delegatePanelMusicTile(pa_TicketClick);
-                pa.Top = Index_Y;
-                pa.Left = Index_X;
+                pa.Top = _index_Y;
+                pa.Left = _index_X;
                 panelControlMiddle.Controls.Add(pa);
-                Index_X += pa.Width + 5;
+                _index_X += pa.Width + 5;
             }
             return true;
         }
         private void BuildAblumDetailsView(List<Track> tracks)
 		{
-			int refindex = Index_Y;
+			int refindex = _index_Y;
 			
 			PanelMusicTile panelAlbumIcon = new PanelMusicTile(_intAud, tracks, PanelMusicTile.Ticket.ALBUM);
 			panelAlbumIcon.TicketClick += new delegatePanelMusicTile(pa_TicketClick);
-			panelAlbumIcon.Top = Index_Y;
-			panelAlbumIcon.Left = Index_X;
+			panelAlbumIcon.Top = _index_Y;
+			panelAlbumIcon.Left = _index_X;
             panelControlMiddle.Controls.Add(panelAlbumIcon);
 			
 			Label labelRowTrack;
@@ -617,8 +803,8 @@ namespace Droid_Audio
 				labelRowTrack.BackColor = Color.Transparent;
                 labelRowTrack.ForeColor = Color.White;
                 labelRowTrack.Height = 16;
-				labelRowTrack.Top = Index_Y;
-				labelRowTrack.Left = Index_X + 110;
+				labelRowTrack.Top = _index_Y;
+				labelRowTrack.Left = _index_X + 110;
 				labelRowTrack.Text = t.Title;
 				labelRowTrack.Name = t.ArtistName + "|" + t.AlbumName + "|" + t.Path_track;
                 labelRowTrack.Font = new System.Drawing.Font("Calibri", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -626,11 +812,12 @@ namespace Droid_Audio
 				labelRowTrack.MouseLeave += new EventHandler(labelTrack_MouseLeave);
 				labelRowTrack.MouseDoubleClick += new MouseEventHandler(labelTrack_MouseDoubleClick);
 				panelControlMiddle.Controls.Add(labelRowTrack);
-				Index_Y += 16;
+                _index_Y += 16;
 			}
 			
-			if (Index_Y < refindex + panelAlbumIcon.Height) Index_Y = refindex + panelAlbumIcon.Height;
+			if (_index_Y < refindex + panelAlbumIcon.Height) _index_Y = refindex + panelAlbumIcon.Height;
 		}
+
 		private void BuildButtons()
 		{
 			button_eject = new Button();
@@ -946,13 +1133,11 @@ namespace Droid_Audio
 			if (TicketSelectedChange != null)
 				TicketSelectedChange(sender, e);
 		}
-		
 		protected virtual void OnTicketClose(object sender, EventArgs e)
 		{
 			if (TicketClose != null)
 				TicketClose(sender, e);
 		}
-		
 		protected virtual void OnTicketPP(object sender, EventArgs e)
 		{
 			if (TicketPP != null)
@@ -1018,7 +1203,7 @@ namespace Droid_Audio
 			PanelMusicTile pa = sender as PanelMusicTile;
 			if (pa != null)
 			{
-				RefreshTitle(_intAud.ListTrack);
+				RefreshTitle(pa);
 			}
 		}
 		private void pfa_PPEvent(object sender, EventArgs e)

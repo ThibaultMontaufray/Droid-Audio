@@ -115,19 +115,19 @@ namespace Droid_Audio
         {
             _rb_convert_mp3_wav = new RibbonButton("MP3 -> WAV");
             _rb_convert_mp3_wav.Click += _rb_convert_mp3_wav_Click;
-            _rb_convert_mp3_wav.Image = Tools4Libraries.Resources.ResourceIconSet16Default.file_extension_wav;
+            _rb_convert_mp3_wav.SmallImage = Tools4Libraries.Resources.ResourceIconSet16Default.file_extension_wav;
 
             _rb_convert_wav_mp3 = new RibbonButton("WAV -> MP3");
             _rb_convert_wav_mp3.Click += _rb_convert_wav_mp3_Click;
-            _rb_convert_wav_mp3.Image = Tools4Libraries.Resources.ResourceIconSet16Default.file_extension_wav;
+            _rb_convert_wav_mp3.SmallImage = Tools4Libraries.Resources.ResourceIconSet16Default.file_extension_wav;
 
             _rb_convert_mp4_mp3 = new RibbonButton("MP4 -> MP3");
             _rb_convert_mp4_mp3.Click += _rb_convert_mp4_mp3_Click;
-            _rb_convert_mp4_mp3.Image = Tools4Libraries.Resources.ResourceIconSet16Default.file_extension_mp4;
+            _rb_convert_mp4_mp3.SmallImage = Tools4Libraries.Resources.ResourceIconSet16Default.file_extension_mp4;
 
             _rb_convert_mp4_flac = new RibbonButton("MP4 -> FLAC");
             _rb_convert_mp4_flac.Click += _rb_convert_mp4_flac_Click;
-            _rb_convert_mp4_flac.Image = Tools4Libraries.Resources.ResourceIconSet16Default.file_extension_mp4;
+            _rb_convert_mp4_flac.SmallImage = Tools4Libraries.Resources.ResourceIconSet16Default.file_extension_mp4;
 
             _rb_convert = new RibbonButton("Convert");
             _rb_convert.Image = Tools4Libraries.Resources.ResourceIconSet32Default.arrow_switch;

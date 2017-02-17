@@ -1,4 +1,4 @@
-// Log code 46
+// Log code 46 - 40
 
 /*
  * User: Thibault MONTAUFRAY
@@ -142,14 +142,7 @@ namespace Droid_Audio
 			set
             {
                 _path_track = value;
-
-                TagLib.File tagFile = TagLib.File.Create(_path_track);
-                _title = tagFile.Tag.Title;
-                _artists.Add(tagFile.Tag.FirstAlbumArtist);
-                _albums.Add(tagFile.Tag.Album);
-                _year = tagFile.Tag.Year;
-                _number = tagFile.Tag.Track;
-                _genre = new List<string>(tagFile.Tag.Genres);
+                AnalyseFileDetails();
             }
         }
         public string Path_cover_smart
@@ -208,23 +201,6 @@ namespace Droid_Audio
 						Pcommand = String.Format("play {0} notify", Phandle);
 						if ((Err = mciSendString(Pcommand, null, 0, IntPtr.Zero)) != 0) Log.Write("[ DEB : 1906 ] error number : " + Err.ToString());
 					}
-				}
-			}
-		}
-		public int Speed
-		{
-			get
-			{
-				return pSpeed;
-			}
-			set
-			{
-				if (value >= 3 && value <= 4353)
-				{
-					pSpeed = value;
-
-					Pcommand = String.Format("set {0} speed {1}", Phandle, pSpeed);
-					if ((Err = mciSendString(Pcommand, null, 0, IntPtr.Zero)) != 0) Log.Write("[ DEB : 1907 ] error number : " + Err.ToString());
 				}
 			}
 		}
@@ -456,6 +432,26 @@ namespace Droid_Audio
                 _player = new WaveOutEvent();
                 _player.Init(_volumeStream);
                 _fileOpen = true;
+            }
+        }
+        private void AnalyseFileDetails()
+        {
+            try
+            {
+                if (Path.GetExtension(_path_track) != ".flv" && !Path.GetFileName(_path_track).StartsWith("."))
+                { 
+                    TagLib.File tagFile = TagLib.File.Create(_path_track);
+                    _title = tagFile.Tag.Title;
+                    _artists.Add(tagFile.Tag.FirstAlbumArtist);
+                    _albums.Add(tagFile.Tag.Album);
+                    _year = tagFile.Tag.Year;
+                    _number = tagFile.Tag.Track;
+                    _genre = new List<string>(tagFile.Tag.Genres);
+                }
+            }
+            catch (Exception exp)
+            {
+                Log.Write("[ ERR : 4640 ] " + exp.Message);
             }
         }
         private bool BuidReader()

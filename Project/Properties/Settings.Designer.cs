@@ -55,16 +55,5 @@ namespace Droid_Audio.Properties {
                 this["AudioLib"] = value;
             }
         }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        public global::System.Collections.Specialized.StringCollection Artists {
-            get {
-                return ((global::System.Collections.Specialized.StringCollection)(this["Artists"]));
-            }
-            set {
-                this["Artists"] = value;
-            }
-        }
     }
 }

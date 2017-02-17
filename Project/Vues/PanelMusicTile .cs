@@ -1,4 +1,4 @@
-﻿// Log code 27 02
+﻿// Log code 27 03
 
 /*
  * User: Thibault MONTAUFRAY
@@ -11,14 +11,14 @@ using Tools4Libraries;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using System.Drawing.Imaging;
+using System.Drawing.Drawing2D;
+using System.Linq;
 
 namespace Droid_Audio
 {
 	public delegate void delegatePanelMusicTile(object sender, EventArgs e);
 	
-	/// <summary>
-	/// Description of PanelAlbum.
-	/// </summary>
 	public class PanelMusicTile : Panel
 	{
         #region Enum
@@ -35,6 +35,7 @@ namespace Droid_Audio
         private Interface_audio _intAud;
 		private List<string> _albums;
 		private List<string> _artists;
+        private List<string> _folders;
         private List<Track> _tracks;
         private string _genre;
         private Ticket _kindOfTicket;
@@ -45,12 +46,18 @@ namespace Droid_Audio
 		private PictureBox _picture1;
 		private PictureBox _picture2;
 		private PictureBox _picture3;
-		
-		public event delegatePanelMusicTile TicketClick;
-		#endregion
-		
-		#region Properties
-		public List<string> TicketArtist
+
+        public event delegatePanelMusicTile TicketClick;
+        public event delegatePanelMusicTile ArtistPictureAdded;
+        #endregion
+
+        #region Properties
+        public List<string> TicketFolders
+        {
+            get { return _folders; }
+            set { _folders = value; }
+        }
+        public List<string> TicketArtist
 		{
 			get { return _artists; }
 		}
@@ -62,6 +69,11 @@ namespace Droid_Audio
 		{
 			get { return _kindOfTicket; }
 		}
+        public string Genre
+        {
+            get { return _genre; }
+            set { _genre = value; }
+        }
         #endregion
 
         #region Constructor
@@ -69,6 +81,7 @@ namespace Droid_Audio
         {
             _albums = new List<string>();
             _artists = new List<string>();
+            _folders = new List<string>();
 
             _kindOfTicket = kind_of_ticket;
             _intAud = inter_aud;
@@ -78,6 +91,7 @@ namespace Droid_Audio
             {
                 if (track.AlbumName != null && !_albums.Contains(track.AlbumName)) _albums.Add(track.AlbumName);
                 if (track.ArtistName != null && !_artists.Contains(track.ArtistName)) _artists.Add(track.ArtistName);
+                if (track.Path_track != null && !_folders.Contains(track.Path_track)) _folders.Add(track.Path_track);
             }
             BuildComponent();
         }
@@ -85,6 +99,7 @@ namespace Droid_Audio
         {
             _albums = new List<string>();
             _artists = new List<string>();
+            _folders = new List<string>();
 
             _kindOfTicket = kind_of_ticket;
             _intAud = inter_aud;
@@ -94,7 +109,14 @@ namespace Droid_Audio
         }
         #endregion
 
-        #region Methods
+        #region Methods protected
+        protected virtual void OnTicketClick(object sender, EventArgs e)
+        {
+            if (TicketClick != null) TicketClick(sender, e);
+        }
+        #endregion
+        
+        #region Methods private
         private void BuildComponent()
         {
             BuildComponenCommonBase();
@@ -317,18 +339,20 @@ namespace Droid_Audio
 			//	this.Controls.Add(_picture3);
 			//}
 		}
-		protected virtual void OnTicketClick(object sender, EventArgs e)
-		{
-			if (TicketClick != null)
-				TicketClick(sender, e);
-		}
+
         private Image GetArtistPicture()
         {
+            string pictureFileName = Path.Combine(_intAud.WORKING_PATH, "Artists", _artists[0]) + ".jpg";
+            if (!Directory.Exists(Path.Combine(_intAud.WORKING_PATH, "Artists")))
+            {
+                Directory.CreateDirectory(Path.Combine(_intAud.WORKING_PATH, "Artists"));
+            }
+
             if (_artists.Count > 0)
             {
                 try
                 {
-                    if (!_intAud.ArtistPictures.ContainsKey(_artists[0]) || _intAud.ArtistPictures[_artists[0]] == null)
+                    if (!File.Exists(pictureFileName))
                     {
                         try
                         {
@@ -339,18 +363,20 @@ namespace Droid_Audio
                             WebResponse webResponse = webRequest.GetResponse();
                             Stream stream = webResponse.GetResponseStream();
 
-                            _intAud.ArtistPictures[_artists[0]] = ImageToString(Image.FromStream(stream));
-                            _intAud.SaveArtist();
+                            Image artistPic = Image.FromStream(stream);
+                            ResizePicture(ref artistPic, 200, 200);
+                            artistPic.Save(pictureFileName);
+                            
                             webResponse.Close();
                         }
                         catch (Exception exp)
                         {
-                            Log.Write("[ ERR : 1908 ] Error while loading artist picture.\n\n" + exp.Message);
+                            Log.Write("[ ERR : 2703 ] Error while loading artist picture.\n\n" + exp.Message);
                         }
                     }
-                    if (_intAud.ArtistPictures[_artists[0]] != null)
+                    if (File.Exists(pictureFileName))
                     {
-                        return StringToImage(_intAud.ArtistPictures[_artists[0]].ToString());
+                        return Image.FromFile(pictureFileName);
                     }
                 }
                 catch (Exception exp)
@@ -361,7 +387,7 @@ namespace Droid_Audio
             return null;
         }
         #endregion
-
+        
         // TODO : migrate this in Droid_Image
         private string ImageToString(Image img)
         {
@@ -382,6 +408,35 @@ namespace Droid_Audio
             byte[] array = Convert.FromBase64String(imageString);
             Image image = Image.FromStream(new MemoryStream(array));
             return image;
+        }
+        // TODO : migrate this in Droid_Image
+        private void ResizePicture(ref Image image, int maxWidth, int maxHeight)
+        {
+            // Get the image's original width and height
+            int originalWidth = image.Width;
+            int originalHeight = image.Height;
+
+            // To preserve the aspect ratio
+            float ratioX = (float)maxWidth / (float)originalWidth;
+            float ratioY = (float)maxHeight / (float)originalHeight;
+            float ratio = Math.Min(ratioX, ratioY);
+
+            // New width and height based on aspect ratio
+            int newWidth = (int)(originalWidth * ratio);
+            int newHeight = (int)(originalHeight * ratio);
+
+            // Convert other formats (including CMYK) to RGB.
+            Bitmap newImage = new Bitmap(newWidth, newHeight, PixelFormat.Format24bppRgb);
+
+            // Draws the image in the specified size with quality mode set to HighQuality
+            using (Graphics graphics = Graphics.FromImage(newImage))
+            {
+                graphics.CompositingQuality = CompositingQuality.HighQuality;
+                graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                graphics.SmoothingMode = SmoothingMode.HighQuality;
+                graphics.DrawImage(image, 0, 0, newWidth, newHeight);
+            }
+            image = newImage;
         }
 
         #region Event

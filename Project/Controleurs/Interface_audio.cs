@@ -1,4 +1,4 @@
-// Log code 19 - 08
+// Log code 19 - 09
 
 // http://www.developpez.net/forums/d521994/dotnet/langages/csharp/lire-wav-mp3-plus-simplement-possible/
 // http://www.codeproject.com/Articles/14709/Playing-MP3s-using-MCI
@@ -36,7 +36,9 @@ namespace Droid_Audio
 	
 	public class Interface_audio : GPInterface
 	{
-		#region Attributes
+        #region Attributes
+        public readonly string WORKING_PATH = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Servodroid\Droid-Audio";
+
         private static Interface_audio _this;
 		private Panel _sheet;
 		private ToolStripMenuAudio _tsm;
@@ -44,22 +46,18 @@ namespace Droid_Audio
 		private bool panelAudioBuilt;
 		private PanelAudio _panau;
 		private List<Track> _listTrack;
+        private List<Track> _listTrackFiltered;
+        
         private List<string> _recentAudio;
         private List<string> _musicFolders;
         private string _convertSrcFile;
         private string _convertTrgFile;
-        private Dictionary<string, string> _artistPictures;
         
         public event delegateInterfaceMusic TicketClose;
 		public event delegateInterfaceMusic Disposed;
         #endregion
 
         #region Properties
-        public Dictionary<string, string> ArtistPictures
-        {
-            get { return _artistPictures; }
-            set { _artistPictures = value; }
-        }
         public string ConvertTargetFile
         {
             get { return _convertTrgFile; }
@@ -87,8 +85,13 @@ namespace Droid_Audio
         public PanelAudio Panau
 		{
 			get { return _panau; }
-		}
-		public List<Track> ListTrack
+        }
+        public List<Track> ListTrackFiltered
+        {
+            get { return _listTrackFiltered; }
+            set { _listTrackFiltered = value; }
+        }
+        public List<Track> ListTrack
 		{
 			get { return _listTrack; }
 			set { _listTrack = value; }
@@ -294,17 +297,6 @@ namespace Droid_Audio
             SaveMusicFolders();
             SaveAudioRecurrent(currentAudioPath);
             SaveAudioLib();
-        }
-        public void SaveArtist()
-        {
-            foreach (var item in _artistPictures)
-            {
-                if (!Properties.Settings.Default.Artists.Contains(item.Key + "#" + item.Value))
-                {
-                    Properties.Settings.Default.Artists.Add(item.Key + "#" + item.Value);
-                }
-            }
-            Properties.Settings.Default.Save();
         }
 
         #region ACTION
@@ -526,22 +518,8 @@ namespace Droid_Audio
             _recentAudio = new List<string>();
             _musicFolders = new List<string>();
             _listTrack = new List<Track>();
-            _artistPictures = new Dictionary<string, string>();
+            _listTrackFiltered = new List<Track>();
 
-            if (Properties.Settings.Default.Artists == null)
-            {
-                Properties.Settings.Default.Artists = new StringCollection();
-            }
-            else
-            {
-                foreach (string artistPic in Properties.Settings.Default.Artists)
-                {
-                    if (artistPic.Split('#').Length == 2)
-                    {
-                        _artistPictures[artistPic.Split('#')[0]] = artistPic.Split('#')[1];
-                    }
-                }
-            }
             if (Properties.Settings.Default.RecentTitles != null)
             { 
                 foreach (var item in Properties.Settings.Default.RecentTitles)
@@ -645,7 +623,7 @@ namespace Droid_Audio
                 }
                 catch (Exception exp)
                 {
-                    Log.Write("[ ERR : 1907 ] Error while saving artist profile.\n\n" + exp.Message);
+                    Log.Write("[ ERR : 1909 ] Error while saving artist profile.\n\n" + exp.Message);
                 }
             }
             Properties.Settings.Default.Save();
