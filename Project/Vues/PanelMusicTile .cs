@@ -48,7 +48,6 @@ namespace Droid_Audio
 		private PictureBox _picture3;
 
         public event delegatePanelMusicTile TicketClick;
-        public event delegatePanelMusicTile ArtistPictureAdded;
         #endregion
 
         #region Properties

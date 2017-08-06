@@ -36,11 +36,11 @@ namespace Droid_Audio
         private string _format;
         private string _path_cover_smart;
         private string _path_cover_large;
-        private string name;
         private List<string> _genre;
         private List<string> _albums;
         private List<string> _artists;
-
+        private bool _isPlaying;
+        
         private Interface_audio _int_aud;
         private WaveStream _mainOutputStream;
         private WaveChannel32 _volumeStream;
@@ -52,14 +52,15 @@ namespace Droid_Audio
 		
 		private bool _fileOpen;
 		private string Pcommand, FName, Phandle;
-		private bool Playing, Paused, Looping, MutedAll, MutedLeft, MutedRight;
 		private const int MM_MCINOTIFY = 0x03b9;
-		private int Err, aVolume, bVolume, lVolume, pSpeed, rVolume, tVolume, VolBalance;
+        private bool Paused, Looping, MutedAll, MutedLeft, MutedRight;
+        private int Err, aVolume, bVolume, lVolume, pSpeed, rVolume, tVolume, VolBalance;
 		private ulong Lng;
 		[DllImport("winmm.dll")]
 		private static extern int mciSendString(string command, StringBuilder buffer, int bufferSize, IntPtr hwndCallback);
-		
-		public event delegateMusicTicket WaveViewerBuilt;
+
+        //public event delegateMusicTicket WaveViewerBuilt;
+        public event delegateTrack StatusChanged;
         #endregion
 
         #region Properties
@@ -155,11 +156,6 @@ namespace Droid_Audio
             get { return _path_cover_large; }
             set { _path_cover_large = value; }
         }
-        public string Name
-        {
-            get { return name; }
-            set { name = value; }
-        }
         public string Classement
 		{
 			get { return _classement; }
@@ -173,36 +169,6 @@ namespace Droid_Audio
 		public string PHandle
 		{
 			get { return Phandle; }
-		}
-		public bool IsPlaying
-		{
-			get	{ return Playing; }
-		}
-		public bool IsPaused
-		{
-			get { return Paused; }
-			set { Paused = value; }
-		}
-		public bool IsLooping
-		{
-			get { return Looping; }
-			set
-			{
-				Looping = value;
-				if (_fileOpen && Playing && !Paused)
-				{
-					if (Looping)
-					{
-						Pcommand = String.Format("play {0} notify repeat", Phandle);
-						if ((Err = mciSendString(Pcommand, null, 0, IntPtr.Zero)) != 0) Log.Write("[ DEB : 1905 ] error number : " + Err.ToString());
-					}
-					else
-					{
-						Pcommand = String.Format("play {0} notify", Phandle);
-						if ((Err = mciSendString(Pcommand, null, 0, IntPtr.Zero)) != 0) Log.Write("[ DEB : 1906 ] error number : " + Err.ToString());
-					}
-				}
-			}
 		}
 		public ulong AudioLength
 		{
@@ -218,7 +184,7 @@ namespace Droid_Audio
 		{
 			get
 			{
-				if (_fileOpen && Playing)
+				if (_fileOpen && IsPlaying)
 				{
 					StringBuilder s = new StringBuilder(128);
 					Pcommand = String.Format("status {0} position", Phandle);
@@ -229,32 +195,29 @@ namespace Droid_Audio
 				else
 					return 0;
 			}
-		}
+        }
+        public bool IsPlaying
+        {
+            get { return _isPlaying; }
+            set { _isPlaying = value; }
+        }
         #endregion
 
         #region Constructor
         public Track()
         {
-            _genre = new List<string>();
-            _albums = new List<string>();
-            _artists = new List<string>();
-
+            Init();
             InitializeEnvironment();
         }
         public Track(string filePath)
         {
-            _genre = new List<string>();
-            _albums = new List<string>();
-            _artists = new List<string>();
+            Init();
             Path_track = filePath;
-            
             InitializeEnvironment();
         }
         public Track(string filePath, Interface_audio ia)
         {
-            _genre = new List<string>();
-            _albums = new List<string>();
-            _artists = new List<string>();
+            Init();
             Path_track = filePath;
             _int_aud = ia;
 
@@ -265,7 +228,7 @@ namespace Droid_Audio
         #region Methods public
         public void Close()
 		{
-            if (!_fileOpen) Init();
+            if (!_fileOpen) InitAudioParams();
 			Stop();
 			DisposeWave();
 			try
@@ -274,7 +237,7 @@ namespace Droid_Audio
 				{
 					FName = string.Empty;
 					_fileOpen = false;
-					Playing = false;
+                    IsPlaying = false;
 					Paused = false;
 				}
 			}
@@ -285,8 +248,11 @@ namespace Droid_Audio
 		}
 		public void Play()
         {
-            if (!_fileOpen) Init();
+            if (!_fileOpen) InitAudioParams();
             _player.Play();
+
+            _fileOpen = !_fileOpen;
+            if (StatusChanged != null) StatusChanged(_fileOpen, null);
 
 			//if (!_fileOpen)
 			//{
@@ -331,73 +297,84 @@ namespace Droid_Audio
 		}
 		public void PlayPause()
         {
-            if (!_fileOpen) Init();
+            if (!_fileOpen) InitAudioParams();
             if (_fileOpen)
             {
                 _player.Play();
             }
+            _fileOpen = !_fileOpen;
+            if (StatusChanged != null) StatusChanged(_fileOpen, null);
 
-		//	if (!_fileOpen)
-		//	{
-		//		_fileOpen = BuidReader();
-		//	}
-		//	else
-		//	{
-		//		if (_output != null)
-		//		{
-		//			if (_output.PlaybackState == NAudio.Wave.PlaybackState.Playing)
-		//			{
-		//				_output.Pause();
-		//				IsPaused = true;
-		//			}
-		//			else if (_output.PlaybackState == NAudio.Wave.PlaybackState.Paused || _output.PlaybackState == NAudio.Wave.PlaybackState.Stopped)
-		//			{
-		//				_output.Play();
-		//				IsPaused = false;
-		//			}
-		//		}
-		//		else
-		//		{
-		//			if (!Paused)
-		//			{
-		//				Paused = true;
-		//				Pcommand = String.Format("pause {0}", Phandle);
-		//				if ((Err = mciSendString(Pcommand, null, 0, IntPtr.Zero)) != 0) Log.Write("[ DEB : 1918 ] error number : " + Err.ToString());
-		//			}
-		//			else
-		//			{
-		//				Paused = false;
-		//				Pcommand = String.Format("play {0}{1} notify", Phandle, Looping ? " repeat" : string.Empty);
-		//				if ((Err = mciSendString(Pcommand, null, 0, IntPtr.Zero)) != 0) Log.Write("[ DEB : 1919 ] error number : " + Err.ToString());
-		//			}
-		//		}
-		//	}
-		}
+            //	if (!_fileOpen)
+            //	{
+            //		_fileOpen = BuidReader();
+            //	}
+            //	else
+            //	{
+            //		if (_output != null)
+            //		{
+            //			if (_output.PlaybackState == NAudio.Wave.PlaybackState.Playing)
+            //			{
+            //				_output.Pause();
+            //				IsPaused = true;
+            //			}
+            //			else if (_output.PlaybackState == NAudio.Wave.PlaybackState.Paused || _output.PlaybackState == NAudio.Wave.PlaybackState.Stopped)
+            //			{
+            //				_output.Play();
+            //				IsPaused = false;
+            //			}
+            //		}
+            //		else
+            //		{
+            //			if (!Paused)
+            //			{
+            //				Paused = true;
+            //				Pcommand = String.Format("pause {0}", Phandle);
+            //				if ((Err = mciSendString(Pcommand, null, 0, IntPtr.Zero)) != 0) Log.Write("[ DEB : 1918 ] error number : " + Err.ToString());
+            //			}
+            //			else
+            //			{
+            //				Paused = false;
+            //				Pcommand = String.Format("play {0}{1} notify", Phandle, Looping ? " repeat" : string.Empty);
+            //				if ((Err = mciSendString(Pcommand, null, 0, IntPtr.Zero)) != 0) Log.Write("[ DEB : 1919 ] error number : " + Err.ToString());
+            //			}
+            //		}
+            //	}
+        }
 		public void Stop()
         {
-            if (!_fileOpen) Init();
+            if (!_fileOpen) InitAudioParams();
             _player.Stop();
-			//if (_fileOpen)
-			//{
-			//	if (_output != null)
-			//	{
-			//		_output.Stop();
-			//	}
-			//	else
-			//	{
-			//		Playing = false;
-			//		Paused = false;
-			//		Pcommand = String.Format("seek {0} to start", Phandle);
-			//		if ((Err = mciSendString(Pcommand, null, 0, IntPtr.Zero)) != 0) Log.Write("[ DEB : 1916 ] error number : " + Err.ToString());
-			//		Pcommand = String.Format("stop {0}", Phandle);
-			//		if ((Err = mciSendString(Pcommand, null, 0, IntPtr.Zero)) != 0) Log.Write("[ DEB : 1917 ] error number : " + Err.ToString());
-			//	}
-			//}
-		}
+            _fileOpen = false;
+            if (StatusChanged != null) StatusChanged(_fileOpen, null);
+            //if (_fileOpen)
+            //{
+            //	if (_output != null)
+            //	{
+            //		_output.Stop();
+            //	}
+            //	else
+            //	{
+            //		Playing = false;
+            //		Paused = false;
+            //		Pcommand = String.Format("seek {0} to start", Phandle);
+            //		if ((Err = mciSendString(Pcommand, null, 0, IntPtr.Zero)) != 0) Log.Write("[ DEB : 1916 ] error number : " + Err.ToString());
+            //		Pcommand = String.Format("stop {0}", Phandle);
+            //		if ((Err = mciSendString(Pcommand, null, 0, IntPtr.Zero)) != 0) Log.Write("[ DEB : 1917 ] error number : " + Err.ToString());
+            //	}
+            //}
+        }
 		#endregion
 		
 		#region Methods private
         private void Init()
+        {
+            _genre = new List<string>();
+            _albums = new List<string>();
+            _artists = new List<string>();
+            _isPlaying = false;
+        }
+        private void InitAudioParams()
         {
             _fileOpen = false;
 
@@ -471,7 +448,7 @@ namespace Droid_Audio
 		{
 			Pcommand = string.Empty;
 			FName = string.Empty;
-			Playing = false;
+            IsPlaying = false;
 			Paused = false;
 			Looping = false;
 			MutedAll = MutedLeft = MutedRight = false;
@@ -492,7 +469,7 @@ namespace Droid_Audio
 					Pcommand = String.Format("open \"" + Path_track + "\" type mpegvideo alias {0}", Phandle);
 					if ((Err = mciSendString(Pcommand, null, 0, IntPtr.Zero)) != 0) Log.Write("[ DEB : 1908 ] error number : " + Err.ToString());
 					FName = _int_aud.PathFile;
-					Playing = false;
+                    IsPlaying = false;
 					Paused = false;
 					Pcommand = String.Format("set {0} time format milliseconds", Phandle);
 					if ((Err = mciSendString(Pcommand, null, 0, IntPtr.Zero)) != 0) Log.Write("[ DEB : 1909 ] error number : " + Err.ToString());
@@ -578,7 +555,7 @@ namespace Droid_Audio
 		{
 			if (_fileOpen && milliseconds <= Lng)
 			{
-				if (Playing)
+				if (IsPlaying)
 				{
 					if (Paused)
 					{
@@ -830,11 +807,11 @@ namespace Droid_Audio
 		#endregion
 		
 		#region Methods protected
-		protected virtual void OnWaveViewerBuilt(object sender, EventArgs e)
-		{
-			if (WaveViewerBuilt != null)
-				WaveViewerBuilt(sender, e);
-		}
+		//protected virtual void OnWaveViewerBuilt(object sender, EventArgs e)
+		//{
+		//	if (WaveViewerBuilt != null)
+		//		WaveViewerBuilt(sender, e);
+		//}
 		#endregion
 	}
 }

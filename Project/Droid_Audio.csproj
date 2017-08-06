@@ -163,9 +163,7 @@
     <Compile Include="Vues\PanelAudio.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Vues\PanelFicheAudio.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="Vues\PanelFicheAudio.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Vues\migration_to_Tools4Lib\RichListView.cs">
       <SubType>Component</SubType>
@@ -231,7 +229,6 @@
     <None Include="Resources\BackgroundImageAudio.jpg" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ffmpeg.exe" />
     <Content Include="libmp3lame.32.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

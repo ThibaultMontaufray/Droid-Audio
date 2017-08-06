@@ -23,6 +23,7 @@ namespace Droid_Audio
         private int _panelY = 5;
         private int _tilesColumCapacity;
         private RichListViewItem.Format _size;
+        private bool _selected;
         #endregion
 
         #region Properties
@@ -50,6 +51,15 @@ namespace Droid_Audio
         {
             get { return _size; }
             set { _size = value; }
+        }
+        public bool Selected
+        {
+            get { return _selected; }
+            set
+            {
+                _selected = value;
+                ItemSelectionChanged();
+            }
         }
         #endregion
 
@@ -86,6 +96,7 @@ namespace Droid_Audio
 
             RefreshComponent();
         }
+
         private void DrawTiles()
         {
             this.Controls.Clear();
@@ -401,6 +412,17 @@ namespace Droid_Audio
                         }
                     }
                 }
+            }
+        }
+        private void ItemSelectionChanged()
+        {
+            if (_selected)
+            {
+                this.BackColor = Color.DimGray;
+            }
+            else
+            {
+                this.BackColor = Color.Black;
             }
         }
         #endregion

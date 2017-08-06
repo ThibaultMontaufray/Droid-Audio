@@ -7,16 +7,10 @@ using System;
 using System.IO;
 using System.Windows.Forms;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Text;
-using System.Windows.Forms.VisualStyles;
 using Tools4Libraries;
-using System.Threading.Tasks;
 using NAudio.Wave;
 using System.Xml.Serialization;
 using System.Linq;
-using System.Net;
-using System.Collections.Specialized;
 using System.Diagnostics;
 
 /// <summary>
@@ -698,7 +692,6 @@ namespace Droid_Audio
 			if (TicketClose != null)
 				TicketClose(sender, e);
 		}
-		
 		protected virtual void OnDispose(object sender, EventArgs e)
 		{
 			if (Disposed != null)
@@ -716,12 +709,12 @@ namespace Droid_Audio
 			if(sender==null)
 			{
                 //SheetMusic.Controls.Text = "Music";
-			}
+            }
 			else
 			{
-				PanelFicheAudio pfa = sender as PanelFicheAudio;
-				//tsm.CurrentTabPage.Text = pfa.TrackLinked.Title;
-			}
+                //PanelFicheAudio pfa = sender as PanelFicheAudio;
+                //tsm.CurrentTabPage.Text = pfa.TrackLinked.Title;
+            }
 		}
 		private void panau_TicketClose(object sender, EventArgs e)
 		{

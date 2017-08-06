@@ -956,7 +956,7 @@ namespace Droid_Audio
 			panel_current_selection.Controls.Add(button_loop);
 			
 		}
-        private bool LoadTicket(Interface_audio inter_aud, Track t)
+        private bool LoadTicket(Interface_audio inter_aud, Track track)
         {
             try
             {
@@ -965,13 +965,13 @@ namespace Droid_Audio
 
                 Detail detail = new Detail();
                 detail.DetFamily = RichListViewItem.Family.AUDIO;
-                detail.DetValue = t.AlbumName;
+                detail.DetValue = track.AlbumName;
 
-                listViewItem = new RichListViewItem(Path.GetFileName(t.Path_track));
-                if (t.Path_cover_smart == null) listViewItem.Picture = _intAud.Tsm.Gui.imageListFicheAudio.Images[_intAud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
-                else listViewItem.Picture = Image.FromFile(t.Path_cover_smart);
+                listViewItem = new RichListViewItem(Path.GetFileName(track.Path_track));
+                if (track.Path_cover_smart == null) listViewItem.Picture = _intAud.Tsm.Gui.imageListFicheAudio.Images[_intAud.Tsm.Gui.imageListFicheAudio.Images.IndexOfKey("void")];
+                else listViewItem.Picture = Image.FromFile(track.Path_cover_smart);
                 listViewItem.Details = new List<Detail>() { detail };
-                listViewItem.AssociatedObject = t;
+                listViewItem.AssociatedObject = track;
                 listViewItem.Size = RichListViewItem.Format.AUDIO;
                 panel_list_to_play.Items.Add(listViewItem);
                 listPfaToPlay.Add(listViewItem);
@@ -1213,7 +1213,7 @@ namespace Droid_Audio
 		private void button_pp_Click(object sender, EventArgs e)
 		{
 			_intAud.GoAction("pp");
-			if((CurrentPlayedTrack.AssociatedObject as Track).IsPaused) button_pp.Image = tsm.Gui.imageListFicheAudio16.Images[tsm.Gui.imageListFicheAudio16.Images.IndexOfKey("play")];
+			if((CurrentPlayedTrack.AssociatedObject as Track).IsPlaying) button_pp.Image = tsm.Gui.imageListFicheAudio16.Images[tsm.Gui.imageListFicheAudio16.Images.IndexOfKey("play")];
 			else button_pp.Image = tsm.Gui.imageListFicheAudio16.Images[tsm.Gui.imageListFicheAudio16.Images.IndexOfKey("pause")];
 		}
 		private void button_stop_Click(object sender, EventArgs e)
